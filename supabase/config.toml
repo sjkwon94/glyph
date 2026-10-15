@@ -1,0 +1,7 @@
+project_id = "glyph-local"
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.ad-reward-webhook]
+verify_jwt = false
