@@ -5,6 +5,9 @@ import { Modal } from '../components/Modal';
 import { getNovel } from '../data';
 import { EVENT_AD_REWARD } from '../promotions';
 import { paginateParagraphs, safePercent } from '../readerUtils';
+import { WatermarkPattern } from '../lib/forensicWatermark';
+import { isUuid } from '../lib/platformIds';
+import { supabase } from '../lib/supabase';
 import { type ReaderTheme, useApp } from '../state/AppContext';
 import { useAuth } from '../state/AuthContext';
 
@@ -42,6 +45,10 @@ function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficie
   );
 }
 
+function ForensicWatermarkOverlay({ token }: { token: string }) {
+  return <div className="forensic-watermark-layer" aria-hidden="true">{['18%', '42%', '66%', '88%'].map((top, index) => <span key={`${top}-${index}`} style={{ top }}><WatermarkPattern token={token} size={132} /></span>)}</div>;
+}
+
 export function ReaderPage() {
   const { demoMode, viewer } = useAuth();
   const { novelId, chapterId } = useParams();
@@ -59,6 +66,7 @@ export function ReaderPage() {
   const [insufficient, setInsufficient] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [forensicToken, setForensicToken] = useState('');
   const touchStart = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +87,24 @@ export function ReaderPage() {
 
   useEffect(() => { setPage(0); setScrollProgress(0); }, [chapterId]);
   useEffect(() => { if (chapter && !hasAccess) setUnlockTarget(chapterIndex); }, [chapter, chapterIndex, hasAccess]);
+  useEffect(() => {
+    let active = true;
+    setForensicToken('');
+    if (!chapter || !hasAccess) return () => { active = false; };
+    if (demoMode) {
+      setForensicToken(crypto.randomUUID().replace(/-/g, ''));
+      return () => { active = false; };
+    }
+    if (!supabase || !novel || !isUuid(chapter.id)) return () => { active = false; };
+    let sessionId = sessionStorage.getItem('glyph-watermark-session');
+    if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem('glyph-watermark-session', sessionId); }
+    void supabase.rpc('issue_reader_watermark', { p_novel_slug: novel.id, p_chapter_id: chapter.id, p_session_id: sessionId }).then(({ data }) => {
+      if (!active) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row?.token) setForensicToken(String(row.token));
+    });
+    return () => { active = false; };
+  }, [chapter, demoMode, hasAccess, novel]);
   useEffect(() => {
     const resize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', resize);
@@ -145,6 +171,7 @@ export function ReaderPage() {
     <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
       <div className="reader-watermark" aria-hidden="true">{viewer ? `${viewer.displayName} · 글리프 · 무단 복제 금지` : '글리프 · 저작권 보호 · 무단 복제 금지'}</div>
+      {forensicToken && <ForensicWatermarkOverlay token={forensicToken} />}
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>
         <div><strong>{novel.title}</strong><span>{chapter.number}화. {chapter.title}</span></div>

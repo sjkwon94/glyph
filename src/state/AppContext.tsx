@@ -2,6 +2,7 @@ import { createContext, type ReactNode, useContext, useEffect, useMemo, useState
 import { getCategoryLabel, novels as demoNovels, type CategoryId, type Novel } from '../data';
 import { CHAPTER_KEY_BY_UUID, CHAPTER_UUID_BY_KEY, isUuid, NOVEL_SLUG_BY_UUID, NOVEL_UUID_BY_SLUG } from '../lib/platformIds';
 import { isDemoMode, supabase } from '../lib/supabase';
+import { detectForensicWatermark, type WatermarkDetection } from '../lib/forensicWatermark';
 import { useAuth } from './AuthContext';
 
 export type ReaderTheme = 'paper' | 'sepia' | 'night' | 'charcoal';
@@ -53,6 +54,20 @@ export type ModerationReport = {
   details: string;
   status: 'received' | 'reviewing' | 'resolved' | 'dismissed';
   createdAt: string;
+  evidence?: ReportEvidenceSummary;
+};
+
+export type ReportEvidenceSummary = {
+  id: string;
+  fileName: string;
+  status: 'queued' | 'detected' | 'not_detected' | 'needs_review' | 'failed';
+  confidence?: number;
+  matchedUserId?: string;
+  matchedDisplayName?: string;
+  matchedNovelId?: string;
+  matchedChapterId?: string;
+  issuedAt?: string;
+  note: string;
 };
 
 export type AuthorApplication = {
@@ -105,7 +120,7 @@ type AppContextValue = PersistedState & {
   createNovel: (title: string, category: Exclude<CategoryId, 'all'>, synopsis: string) => Promise<ActionResult>;
   saveDraft: (novelId: string, title: string, body: string, publish: boolean, draftId?: string) => Promise<ActionResult>;
   submitAuthorApplication: (application: AuthorApplicationInput) => Promise<ActionResult>;
-  reportContent: (report: Omit<ModerationReport, 'id' | 'status' | 'createdAt'>) => Promise<ActionResult>;
+  reportContent: (report: Omit<ModerationReport, 'id' | 'status' | 'createdAt' | 'evidence'> & { evidence?: File | null }) => Promise<ActionResult>;
   blockUser: (displayName: string, userId?: string) => Promise<ActionResult>;
   unblockUser: (displayName: string) => Promise<ActionResult>;
   reviewAuthorApplication: (userId: string | undefined, status: 'approved' | 'rejected', note: string) => Promise<ActionResult>;
@@ -253,7 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const novelSlugByUuid = Object.fromEntries(Object.entries(catalogNovelIds).map(([slug, id]) => [id, slug]));
 
     void (async () => {
-      const [wallet, unlocks, reactions, comments, application, posts, blocks, reports, works, postComments, postReactions] = await Promise.all([
+      const [wallet, unlocks, reactions, comments, application, posts, blocks, reports, evidence, works, postComments, postReactions] = await Promise.all([
         supabase.from('cookie_wallets').select('balance').eq('user_id', viewer.id).maybeSingle(),
         supabase.from('chapter_unlocks').select('chapter_id').eq('user_id', viewer.id),
         supabase.from('reactions').select('target_type,target_id,value').eq('user_id', viewer.id),
@@ -262,6 +277,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from('community_posts').select('id,category,title,body,created_at,profiles!community_posts_user_id_fkey(id,display_name)').eq('status', 'visible').order('created_at', { ascending: false }).limit(100),
         supabase.from('user_blocks').select('blocked_id,profiles!user_blocks_blocked_id_fkey(display_name)').eq('blocker_id', viewer.id),
         supabase.from('content_reports').select('id,target_type,target_id,reason,details,status,created_at').order('created_at', { ascending: false }).limit(100),
+        supabase.from('content_report_evidence').select('id,report_id,file_name,detection_status,confidence,matched_watermark_id,detector_note,analyzed_at,reader_watermark_issues(user_id,novel_id,chapter_id,issued_at,profiles!reader_watermark_issues_user_id_fkey(display_name))').order('created_at', { ascending: false }).limit(200),
         supabase.from('novels').select('id,slug,title,category,synopsis,status').eq('owner_id', viewer.id).order('updated_at', { ascending: false }),
         supabase.from('comments').select('post_id').not('post_id', 'is', null).eq('status', 'visible').limit(10000),
         supabase.from('reactions').select('target_id,value').eq('target_type', 'community_post').limit(10000),
@@ -275,7 +291,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         : { data: [], error: null };
       if (!active) return;
 
-      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, works.error, postComments.error, postReactions.error, workChapters.error, applications.error].filter(Boolean);
+      // 포렌식 마이그레이션을 적용하는 동안에도 기존 신고/열람 기능은 중단하지 않는다.
+      const evidenceSyncError = evidence.error?.code === '42P01' ? null : evidence.error;
+      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, evidenceSyncError, works.error, postComments.error, postReactions.error, workChapters.error, applications.error].filter(Boolean);
       if (errors.length) setSyncError(errors[0]?.message ?? '일부 데이터를 불러오지 못했습니다.');
 
       const reactionMap: Record<string, Reaction> = {};
@@ -313,6 +331,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { id: postId, category, categoryLabel: getCategoryLabel(category), title: String(row.title), body: String(row.body), author: profile.display_name ?? '글리프 독자', authorId: profile.id, createdAt: displayDate(row.created_at), views: 0, comments: postCommentCounts.get(postId) ?? 0, likes: postLikeCounts.get(postId) ?? 0 };
       });
 
+      const evidenceByReport = new Map<string, ReportEvidenceSummary>();
+      for (const row of evidence.data ?? []) {
+        const matched = Array.isArray(row.reader_watermark_issues) ? row.reader_watermark_issues[0] : row.reader_watermark_issues;
+        const matchedProfile = matched && 'profiles' in matched ? relatedProfile(matched.profiles) : null;
+        evidenceByReport.set(String(row.report_id), {
+          id: String(row.id), fileName: String(row.file_name), status: row.detection_status as ReportEvidenceSummary['status'],
+          confidence: row.confidence == null ? undefined : Number(row.confidence), matchedUserId: matched?.user_id ? String(matched.user_id) : undefined, matchedDisplayName: matchedProfile?.display_name,
+          matchedNovelId: matched?.novel_id ? String(matched.novel_id) : undefined, matchedChapterId: matched?.chapter_id ? String(matched.chapter_id) : undefined,
+          issuedAt: matched?.issued_at ? displayDate(matched.issued_at) : undefined, note: String(row.detector_note ?? ''),
+        });
+      }
+
       setState((previous) => ({
         ...productionState,
         readerSettings: previous.readerSettings,
@@ -342,7 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         authorApplication: mapApplication(application.data as Record<string, unknown> | null),
         pendingApplications: (applications.data ?? []).map((row) => mapApplication(row as Record<string, unknown>)),
         userPosts: remotePosts,
-        reports: (reports.data ?? []).map((row) => ({ id: String(row.id), targetId: String(row.target_id), targetType: row.target_type as ModerationReport['targetType'], targetAuthor: '신고 대상', reason: row.reason as ModerationReport['reason'], details: String(row.details), status: row.status as ModerationReport['status'], createdAt: displayDate(row.created_at) })),
+        reports: (reports.data ?? []).map((row) => ({ id: String(row.id), targetId: String(row.target_id), targetType: row.target_type as ModerationReport['targetType'], targetAuthor: '신고 대상', reason: row.reason as ModerationReport['reason'], details: String(row.details), status: row.status as ModerationReport['status'], createdAt: displayDate(row.created_at), evidence: evidenceByReport.get(String(row.id)) })),
         blockedUsers: (blocks.data ?? []).map((row) => relatedProfile(row.profiles).display_name).filter((name): name is string => Boolean(name)),
       }));
       setSyncing(false);
@@ -513,15 +543,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     },
     reportContent: async (report) => {
+      const evidenceFile = report.evidence ?? null;
+      const { evidence: _evidence, ...reportData } = report;
+      const validateEvidence = (file: File | null) => {
+        if (!file) return '';
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return '증거 사진은 JPG, PNG, WEBP만 첨부할 수 있습니다.';
+        if (file.size > 10 * 1024 * 1024) return '증거 사진은 10MB 이하만 첨부할 수 있습니다.';
+        return '';
+      };
+      const evidenceError = validateEvidence(evidenceFile);
+      if (evidenceError) return { ok: false, reason: evidenceError };
       if (isDemoMode) {
-        commit((previous) => ({ ...previous, reports: [{ ...report, id: crypto.randomUUID(), status: 'received', createdAt: new Date().toISOString() }, ...previous.reports] }));
+        const detection = evidenceFile ? await detectForensicWatermark(evidenceFile) : null;
+        commit((previous) => ({ ...previous, reports: [{ ...reportData, id: crypto.randomUUID(), status: 'received', createdAt: new Date().toISOString(), evidence: evidenceFile ? { id: crypto.randomUUID(), fileName: evidenceFile.name, status: detection?.detected ? 'needs_review' : 'not_detected', confidence: detection?.confidence, note: detection?.note ?? '분석 전' } : undefined }, ...previous.reports] }));
         return { ok: true };
       }
       if (!supabase || !viewer) return { ok: false, reason: '로그인 후 신고할 수 있습니다.' };
-      if (!isUuid(report.targetId)) return { ok: false, reason: '샘플 콘텐츠는 운영 신고 대상이 아닙니다.' };
-      const { data, error } = await supabase.from('content_reports').insert({ reporter_id: viewer.id, target_type: report.targetType, target_id: report.targetId, reason: report.reason, details: report.details }).select('id,created_at').single();
+      if (!isUuid(reportData.targetId)) return { ok: false, reason: '샘플 콘텐츠는 운영 신고 대상이 아닙니다.' };
+      const { data, error } = await supabase.from('content_reports').insert({ reporter_id: viewer.id, target_type: reportData.targetType, target_id: reportData.targetId, reason: reportData.reason, details: reportData.details }).select('id,created_at').single();
       if (error) return { ok: false, reason: error.message };
-      commit((previous) => ({ ...previous, reports: [{ ...report, id: String(data.id), status: 'received', createdAt: displayDate(data.created_at) }, ...previous.reports] }));
+      let evidenceSummary: ReportEvidenceSummary | undefined;
+      if (evidenceFile) {
+        const safeName = evidenceFile.name.normalize('NFKC').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-140) || 'evidence';
+        const storagePath = `${viewer.id}/${data.id}/${crypto.randomUUID()}-${safeName}`;
+        const detection: WatermarkDetection = await detectForensicWatermark(evidenceFile);
+        const upload = await supabase.storage.from('report-evidence').upload(storagePath, evidenceFile, { upsert: false, contentType: evidenceFile.type });
+        if (upload.error) return { ok: false, reason: `신고는 접수됐지만 사진 저장에 실패했습니다: ${upload.error.message}` };
+        const digest = await crypto.subtle.digest('SHA-256', await evidenceFile.arrayBuffer());
+        const sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+        const { data: evidenceRow, error: evidenceInsertError } = await supabase.from('content_report_evidence').insert({ report_id: data.id, reporter_id: viewer.id, storage_path: storagePath, file_name: evidenceFile.name.slice(0, 180), mime_type: evidenceFile.type, size_bytes: evidenceFile.size, sha256, detection_status: detection.detected ? 'queued' : 'not_detected', detected_token: detection.token ?? null, confidence: detection.confidence, detector_note: detection.note }).select('id').single();
+        if (evidenceInsertError) { await supabase.storage.from('report-evidence').remove([storagePath]); return { ok: false, reason: `신고는 접수됐지만 증거 등록에 실패했습니다: ${evidenceInsertError.message}` }; }
+        if (detection.token) await supabase.rpc('match_report_watermark', { p_evidence_id: evidenceRow.id, p_token: detection.token });
+        evidenceSummary = { id: String(evidenceRow.id), fileName: evidenceFile.name, status: detection.token ? 'queued' : 'not_detected', confidence: detection.confidence, note: detection.note };
+      }
+      commit((previous) => ({ ...previous, reports: [{ ...reportData, id: String(data.id), status: 'received', createdAt: displayDate(data.created_at), evidence: evidenceSummary }, ...previous.reports] }));
       return { ok: true };
     },
     blockUser: async (displayName, userId) => {
