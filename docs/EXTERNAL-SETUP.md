@@ -11,9 +11,9 @@
 
 ## Supabase
 
-1. 운영·스테이징 프로젝트를 각각 만들고 `0001_initial.sql`, `0002_launch_controls.sql` 순으로 적용합니다.
+1. 운영·스테이징 프로젝트를 각각 만들고 `0001_initial.sql`, `0002_launch_controls.sql`, `0003_public_catalog_and_application_rpc.sql` 순으로 적용합니다.
 2. 사이트 URL과 허용 Redirect URL을 실제 HTTPS 도메인으로만 제한합니다.
-3. `.env.local`에 공개 URL과 anon 키를 넣고 `VITE_DEMO_MODE=false`로 설정합니다.
+3. `.env.local` 또는 GitHub Actions 변수에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`를 넣고 `VITE_DEMO_MODE=false`로 설정합니다.
 4. 관리자 계정에 MFA를 적용한 뒤 `admin_roles`는 SQL 편집기 또는 서버 운영 도구로만 부여합니다.
 5. Edge Function 비밀에 `PAYMENT_WEBHOOK_SECRET`, `AD_REWARD_WEBHOOK_SECRET`을 설정합니다. `SUPABASE_SERVICE_ROLE_KEY`는 프런트엔드·GitHub 저장소에 두지 않습니다.
 

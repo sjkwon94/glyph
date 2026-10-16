@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { BookCover } from '../components/BookCover';
 import { NovelCard } from '../components/NovelCard';
 import { categories, communityPosts, novels } from '../data';
+import { useApp } from '../state/AppContext';
 
 export function HomePage() {
-  const featured = novels[0];
+  const { catalogNovels } = useApp();
+  const visibleNovels = catalogNovels.length ? catalogNovels : novels;
+  const featured = visibleNovels[0];
 
   return (
     <>
@@ -41,7 +44,7 @@ export function HomePage() {
       <section className="home-section page-container">
         <div className="simple-section-heading"><h2>인기 웹소설</h2><Link to="/discover">전체보기 <ArrowRight size={15} /></Link></div>
         <div className="novel-grid home-novel-grid">
-          {novels.slice(0, 5).map((novel, index) => <NovelCard key={novel.id} novel={novel} rank={index + 1} />)}
+          {visibleNovels.slice(0, 5).map((novel, index) => <NovelCard key={novel.id} novel={novel} rank={index + 1} />)}
         </div>
       </section>
 
@@ -49,7 +52,7 @@ export function HomePage() {
         <div>
           <div className="simple-section-heading"><h2>오늘 업데이트</h2><Link to="/discover">더보기 <ArrowRight size={15} /></Link></div>
           <div className="update-list">
-            {novels.slice(0, 4).map((novel) => (
+            {visibleNovels.slice(0, 4).map((novel) => (
               <Link key={novel.id} to={`/novel/${novel.id}`} className="update-row">
                 <BookCover novel={novel} />
                 <div><strong>{novel.title}</strong><span>{novel.author}</span><small>{novel.chapters.length}화 · {novel.schedule}</small></div>
@@ -60,7 +63,7 @@ export function HomePage() {
         </div>
         <aside className="ranking-box">
           <div className="simple-section-heading"><h2>실시간 인기</h2><span>전체</span></div>
-          <ol>{novels.map((novel, index) => <li key={novel.id}><Link to={`/novel/${novel.id}`}><b>{index + 1}</b><span><strong>{novel.title}</strong><small>{novel.author} · {novel.categoryLabel}</small></span>{index < 2 ? <em>▲</em> : <em>―</em>}</Link></li>)}</ol>
+          <ol>{visibleNovels.map((novel, index) => <li key={novel.id}><Link to={`/novel/${novel.id}`}><b>{index + 1}</b><span><strong>{novel.title}</strong><small>{novel.author} · {novel.categoryLabel}</small></span>{index < 2 ? <em>▲</em> : <em>―</em>}</Link></li>)}</ol>
         </aside>
       </section>
 

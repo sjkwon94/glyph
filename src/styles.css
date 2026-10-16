@@ -494,6 +494,11 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .double-event-banner + .reward-banner { margin-top: 12px; }
 .package-original { color: #999; font-size: 9px; text-decoration: line-through; }
 .draft-list > button > span.published { color: #5948d0; background: #efedff; }
+.studio-work-card select { max-width: 220px; margin-top: 8px; padding: 7px 9px; border: 1px solid #514b59; border-radius: 4px; color: #eeeaf7; background: #2d2932; font: inherit; }
+.studio-work-empty { min-height: 170px; padding: 28px; display: flex; align-items: center; gap: 18px; border: 1px solid var(--line); background: #fff; }
+.studio-work-empty > svg { width: 42px; height: 42px; padding: 9px; color: var(--accent); background: #f0edff; border-radius: 10px; }
+.studio-work-empty > div { flex: 1; }.studio-work-empty h2 { margin: 0 0 6px; font-size: 18px; }.studio-work-empty p { margin: 0; color: var(--muted); font-size: 11px; }
+.studio-list-empty { padding: 32px 20px; color: var(--muted); text-align: center; font-size: 11px; }
 .payment-safety { border-color: #ddd8f5; background: #f7f5ff; color: #5b49d6; }
 .payment-safety p { color: #7f78a4; }
 .package-grid > button:hover, .package-grid > button.popular { border-color: var(--accent); box-shadow: none; }

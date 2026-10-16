@@ -3,10 +3,13 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { NovelCard } from '../components/NovelCard';
 import { categories, type CategoryId, novels, type WeekdayId, weekdays } from '../data';
+import { useApp } from '../state/AppContext';
 
 type DayFilter = 'all' | WeekdayId;
 
 export function DiscoverPage() {
+  const { catalogNovels } = useApp();
+  const visibleNovels = catalogNovels.length ? catalogNovels : novels;
   const [params, setParams] = useSearchParams();
   const initial = (params.get('category') as CategoryId) || 'all';
   const initialDay = (params.get('day') as DayFilter) || 'all';
@@ -15,11 +18,11 @@ export function DiscoverPage() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('popular');
 
-  const filtered = useMemo(() => novels
+  const filtered = useMemo(() => visibleNovels
     .filter((novel) => category === 'all' || novel.category === category)
     .filter((novel) => day === 'all' || novel.days.includes(day))
     .filter((novel) => `${novel.title} ${novel.author} ${novel.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()))
-    .sort((a, b) => sort === 'rating' ? b.rating - a.rating : sort === 'new' ? a.title.localeCompare(b.title) : b.likes - a.likes), [category, day, query, sort]);
+    .sort((a, b) => sort === 'rating' ? b.rating - a.rating : sort === 'new' ? a.title.localeCompare(b.title) : b.likes - a.likes), [category, day, query, sort, visibleNovels]);
 
   const syncParams = (nextCategory: CategoryId, nextDay: DayFilter) => {
     const next = new URLSearchParams();

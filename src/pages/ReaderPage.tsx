@@ -6,6 +6,7 @@ import { getNovel } from '../data';
 import { EVENT_AD_REWARD } from '../promotions';
 import { paginateParagraphs, safePercent } from '../readerUtils';
 import { type ReaderTheme, useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 
 function RewardAd({ onComplete, onClose }: { onComplete: () => void; onClose: () => void }) {
   const [seconds, setSeconds] = useState(30);
@@ -32,22 +33,23 @@ function RewardAd({ onComplete, onClose }: { onComplete: () => void; onClose: ()
   );
 }
 
-function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficient }: { chapterTitle: string; price: number; onUnlock: () => void; onAd: () => void; onClose: () => void; insufficient: boolean }) {
+function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficient, adEnabled }: { chapterTitle: string; price: number; onUnlock: () => void; onAd: () => void; onClose: () => void; insufficient: boolean; adEnabled: boolean }) {
   const { cookieBalance } = useApp();
   return (
     <Modal title="다음 이야기를 열어볼까요?" onClose={onClose}>
-        <div className="unlock-dialog"><div className="unlock-icon"><LockKeyhole /></div><h3>{chapterTitle}</h3><p>구매한 회차는 계속 소장되며 다시 쿠키가 차감되지 않습니다.</p><div className="balance-row"><span>내 쿠키</span><strong><Coins size={17} /> {cookieBalance}</strong></div>{insufficient && <div className="inline-alert">쿠키가 부족합니다. 광고를 보거나 쿠키를 충전해 주세요.</div>}<button className="primary-button full" type="button" onClick={onUnlock}><Coins size={18} /> {price} 쿠키로 소장하기</button><button className="secondary-button full" type="button" onClick={onAd}>30초 광고 보고 {EVENT_AD_REWARD} 쿠키 받기</button><Link className="text-link centered" to="/wallet">쿠키 충전소 가기</Link></div>
+        <div className="unlock-dialog"><div className="unlock-icon"><LockKeyhole /></div><h3>{chapterTitle}</h3><p>구매한 회차는 계속 소장되며 다시 쿠키가 차감되지 않습니다.</p><div className="balance-row"><span>내 쿠키</span><strong><Coins size={17} /> {cookieBalance}</strong></div>{insufficient && <div className="inline-alert">쿠키가 부족합니다. 광고를 보거나 쿠키를 충전해 주세요.</div>}<button className="primary-button full" type="button" onClick={onUnlock}><Coins size={18} /> {price} 쿠키로 소장하기</button><button className="secondary-button full" type="button" disabled={!adEnabled} onClick={onAd}>{adEnabled ? `30초 광고 보고 ${EVENT_AD_REWARD} 쿠키 받기` : '광고 보상 연동 준비 중'}</button><Link className="text-link centered" to="/wallet">쿠키 충전소 가기</Link></div>
     </Modal>
   );
 }
 
 export function ReaderPage() {
+  const { demoMode } = useAuth();
   const { novelId, chapterId } = useParams();
   const navigate = useNavigate();
-  const novel = getNovel(novelId);
+  const { catalogNovels, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
+  const novel = catalogNovels.find((item) => item.id === novelId) ?? getNovel(novelId);
   const chapterIndex = novel?.chapters.findIndex((item) => item.id === chapterId) ?? -1;
   const chapter = chapterIndex >= 0 ? novel?.chapters[chapterIndex] : undefined;
-  const { readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
   const [page, setPage] = useState(0);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [tocOpen, setTocOpen] = useState(false);
@@ -119,9 +121,9 @@ export function ReaderPage() {
   const progress = readerSettings.mode === 'scroll' ? scrollProgress : safePercent(page + 1, pages.length);
   const themeStyles = { '--reader-size': `${readerSettings.fontSize}px`, '--reader-leading': readerSettings.lineHeight, '--reader-width': `${readerSettings.contentWidth}px`, '--reader-brightness': readerSettings.brightness / 100 } as React.CSSProperties;
 
-  const purchaseTarget = () => {
+  const purchaseTarget = async () => {
     if (!targetChapter || unlockTarget === null) return;
-    const result = unlockChapter(targetChapter.id, targetChapter.price);
+    const result = await unlockChapter(targetChapter.id, targetChapter.price);
     if (!result.ok) { setInsufficient(true); return; }
     const targetId = targetChapter.id;
     setUnlockTarget(null); setInsufficient(false);
@@ -176,7 +178,7 @@ export function ReaderPage() {
 
       {settingsOpen && <div className="reader-settings-sheet"><header><strong>읽기 설정</strong><button type="button" onClick={() => setSettingsOpen(false)} aria-label="닫기"><X /></button></header><div className="setting-group"><label>보기 방식</label><div className="segmented"><button className={readerSettings.mode === 'page' ? 'active' : ''} onClick={() => updateReaderSettings({ mode: 'page' })}>페이지</button><button className={readerSettings.mode === 'scroll' ? 'active' : ''} onClick={() => updateReaderSettings({ mode: 'scroll' })}>스크롤</button></div></div><div className="setting-group"><label>글자 크기 <strong>{readerSettings.fontSize}px</strong></label><div className="stepper"><button onClick={() => updateReaderSettings({ fontSize: Math.max(14, readerSettings.fontSize - 1) })}><Minus /></button><span style={{ fontSize: readerSettings.fontSize }}>가나다</span><button onClick={() => updateReaderSettings({ fontSize: Math.min(28, readerSettings.fontSize + 1) })}>+</button></div></div><div className="setting-group"><label>줄 간격</label><input type="range" min="1.5" max="2.4" step="0.1" value={readerSettings.lineHeight} onChange={(event) => updateReaderSettings({ lineHeight: Number(event.target.value) })} /></div><div className="setting-group"><label>화면 밝기 <strong>{readerSettings.brightness}%</strong></label><div className="range-line"><Moon /><input type="range" min="55" max="100" value={readerSettings.brightness} onChange={(event) => updateReaderSettings({ brightness: Number(event.target.value) })} /><Sun /></div></div><div className="setting-group"><label>글꼴</label><div className="segmented"><button className={readerSettings.fontFamily === 'serif' ? 'active' : ''} onClick={() => updateReaderSettings({ fontFamily: 'serif' })}>바탕체</button><button className={readerSettings.fontFamily === 'sans' ? 'active' : ''} onClick={() => updateReaderSettings({ fontFamily: 'sans' })}>고딕체</button></div></div><div className="setting-group"><label>배경</label><div className="theme-choices">{([['paper', '#f7f3eb'], ['sepia', '#eee1c5'], ['charcoal', '#292827'], ['night', '#121820']] as [ReaderTheme, string][]).map(([theme, color]) => <button key={theme} className={readerSettings.theme === theme ? 'active' : ''} style={{ background: color }} onClick={() => updateReaderSettings({ theme })} aria-label={`${theme} 배경`} />)}</div></div></div>}
 
-      {unlockTarget !== null && targetChapter && !showAd && <UnlockDialog chapterTitle={`${targetChapter.number}화. ${targetChapter.title}`} price={targetChapter.price} onUnlock={purchaseTarget} onAd={() => { if (adRewardsToday >= 5) { setInsufficient(true); return; } setShowAd(true); }} onClose={() => { setUnlockTarget(null); if (!hasAccess) navigate(`/novel/${novel.id}`); }} insufficient={insufficient} />}
+      {unlockTarget !== null && targetChapter && !showAd && <UnlockDialog chapterTitle={`${targetChapter.number}화. ${targetChapter.title}`} price={targetChapter.price} onUnlock={() => void purchaseTarget()} onAd={() => { if (!demoMode || adRewardsToday >= 5) { setInsufficient(true); return; } setShowAd(true); }} onClose={() => { setUnlockTarget(null); if (!hasAccess) navigate(`/novel/${novel.id}`); }} insufficient={insufficient} adEnabled={demoMode} />}
       {showAd && <RewardAd onComplete={finishAd} onClose={() => setShowAd(false)} />}
     </div>
   );

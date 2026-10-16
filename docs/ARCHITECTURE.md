@@ -17,7 +17,7 @@ GitHub 저장소 ── Actions ──> GitHub Pages (React PWA)
 ## 보안 경계
 
 - GitHub Pages는 정적 프런트만 담당합니다. 비밀 키, 쿠키 잔액 계산, 결제 승인, 광고 보상 검증을 두지 않습니다.
-- `VITE_SUPABASE_ANON_KEY`는 공개 키이며 RLS가 실제 접근 통제입니다. `service_role` 키는 Edge Function 환경 변수에만 둡니다.
+- `VITE_SUPABASE_PUBLISHABLE_KEY`는 브라우저용 공개 키이며 RLS가 실제 접근 통제입니다. 레거시 `VITE_SUPABASE_ANON_KEY`도 호환하지만 신규 배포에는 publishable 키를 사용합니다. `service_role` 키는 Edge Function 환경 변수에만 둡니다.
 - 유료 회차 본문은 공개 목록 API와 분리합니다. `chapter_catalog`에는 본문이 없고, `chapters` 본문 조회는 작가·소장자·무료 회차에만 허용됩니다.
 - 쿠키 차감은 `unlock_chapter()` 트랜잭션에서 지갑 행을 잠근 뒤 소장 기록과 원장을 함께 기록합니다. 브라우저에는 잔액 수정 권한이 없습니다.
 - 결제/광고 웹훅은 공급자 서명을 검증하고 `provider_order_id`, `provider_event_id`, `idempotency_key`로 중복 지급을 막아야 합니다.

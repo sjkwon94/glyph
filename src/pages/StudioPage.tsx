@@ -2,45 +2,89 @@ import { BadgeCheck, BarChart3, BookOpen, CalendarClock, ChevronRight, Clock3, E
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal } from '../components/Modal';
-import { categories, novels } from '../data';
+import { categories, getCategoryLabel } from '../data';
 import { useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 
 export function StudioPage() {
-  const { authorApplication, drafts, saveDraft, submitAuthorApplication } = useApp();
+  const { authorApplication, authorWorks, createNovel, drafts, saveDraft, submitAuthorApplication } = useApp();
+  const { viewer, demoMode } = useAuth();
   const [editorOpen, setEditorOpen] = useState(false);
+  const [workOpen, setWorkOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
+  const [activeWorkId, setActiveWorkId] = useState('');
+  const [editingDraftId, setEditingDraftId] = useState<string>();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [workTitle, setWorkTitle] = useState('');
+  const [workCategory, setWorkCategory] = useState<'martial' | 'fantasy' | 'romance' | 'mystery' | 'sf' | 'daily'>('fantasy');
+  const [workSynopsis, setWorkSynopsis] = useState('');
   const [penName, setPenName] = useState(authorApplication.penName);
   const [genre, setGenre] = useState(authorApplication.genre || 'fantasy');
   const [introduction, setIntroduction] = useState(authorApplication.introduction);
   const [portfolioUrl, setPortfolioUrl] = useState(authorApplication.portfolioUrl);
   const [sampleName, setSampleName] = useState(authorApplication.sampleName);
+  const [sampleFile, setSampleFile] = useState<File | null>(null);
   const [sampleExcerpt, setSampleExcerpt] = useState(authorApplication.sampleExcerpt);
-  const sample = novels[0];
-  const hasWorkSample = Boolean(portfolioUrl.trim() || sampleName || sampleExcerpt.trim().length >= 200);
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const activeWork = authorWorks.find((work) => work.id === activeWorkId) ?? authorWorks[0];
+  const activeDrafts = activeWork ? drafts.filter((draft) => draft.novelId === activeWork.id) : [];
+  const hasWorkSample = Boolean(portfolioUrl.trim() || sampleFile || (demoMode && sampleName) || sampleExcerpt.trim().length >= 200);
   const applicationReady = penName.trim().length >= 2 && introduction.trim().length >= 50 && hasWorkSample;
 
-  const submitEpisode = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const action = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    if (!saveDraft(title || '제목 없는 회차', body, action?.value === 'publish')) return;
-    setTitle(''); setBody(''); setEditorOpen(false);
+  const openNewEpisode = () => {
+    setEditingDraftId(undefined);
+    setTitle('');
+    setBody('');
+    setMessage('');
+    setEditorOpen(true);
   };
 
-  const submitApplication = (event: FormEvent<HTMLFormElement>) => {
+  const submitEpisode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const action = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    if (!activeWork) { setMessage('먼저 작품을 등록해 주세요.'); return; }
+    setSubmitting(true);
+    setMessage('');
+    const result = await saveDraft(activeWork.id, title || '제목 없는 회차', body, action?.value === 'publish', editingDraftId);
+    setSubmitting(false);
+    if (!result.ok) { setMessage(result.reason ?? '회차를 저장하지 못했습니다.'); return; }
+    setEditingDraftId(undefined); setTitle(''); setBody(''); setEditorOpen(false);
+  };
+
+  const submitWork = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setMessage('');
+    const result = await createNovel(workTitle, workCategory, workSynopsis);
+    setSubmitting(false);
+    if (!result.ok) { setMessage(result.reason ?? '작품을 등록하지 못했습니다.'); return; }
+    setWorkTitle(''); setWorkSynopsis(''); setWorkOpen(false);
+  };
+
+  const submitApplication = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!applicationReady) return;
-    submitAuthorApplication({
+    setSubmitting(true);
+    setMessage('');
+    const result = await submitAuthorApplication({
       penName: penName.trim().slice(0, 30),
       genre,
       introduction: introduction.trim().slice(0, 1000),
       portfolioUrl: portfolioUrl.trim().slice(0, 500),
       sampleName: sampleName.slice(0, 200),
+      sampleFile,
       sampleExcerpt: sampleExcerpt.trim().slice(0, 10000),
     });
+    setSubmitting(false);
+    if (!result.ok) { setMessage(result.reason ?? '신청서를 접수하지 못했습니다.'); return; }
     setApplicationOpen(false);
   };
+
+  if (!demoMode && !viewer) {
+    return <div className="page-container inner-page empty-state"><LockKeyhole /><h1>로그인이 필요합니다</h1><p>작가 등록 신청과 원고 제출은 본인 계정으로 로그인한 뒤 진행해 주세요.</p><Link className="primary-button" to="/auth">로그인</Link></div>;
+  }
 
   if (authorApplication.status !== 'approved') {
     const pending = authorApplication.status === 'pending';
@@ -64,7 +108,7 @@ export function StudioPage() {
           <section className="creator-revenue-summary"><div><span className="section-kicker">작가 수익 원칙</span><h2>유료 회차 70% · 후원 90% · 광고 70%</h2><p>실제 공제 항목과 거래별 계산식은 매월 정산서에 투명하게 표시합니다. 플랫폼 부담 2배 이벤트는 작가 정산액을 줄이지 않습니다.</p></div><Link className="secondary-button" to="/creator-policy">정산 정책 보기</Link></section>
         </div>
 
-        {applicationOpen && <Modal title="작가 등록 신청" onClose={() => setApplicationOpen(false)} wide><form className="author-application-form" onSubmit={submitApplication}><div className="application-form-grid"><label>필명<input value={penName} onChange={(event) => setPenName(event.target.value)} minLength={2} maxLength={30} placeholder="독자에게 표시할 이름" required /></label><label>주요 장르<select value={genre} onChange={(event) => setGenre(event.target.value)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작가 소개 <small>{introduction.length}/1,000 · 50자 이상</small><textarea value={introduction} onChange={(event) => setIntroduction(event.target.value)} minLength={50} maxLength={1000} placeholder="쓰고 싶은 이야기와 연재 경험을 소개해 주세요." required /></label><fieldset><legend>작품 자료 <small>아래 중 하나 이상 필수</small></legend><label>포트폴리오 링크<div className="input-with-icon"><Link2 /><input type="url" value={portfolioUrl} onChange={(event) => setPortfolioUrl(event.target.value)} maxLength={500} placeholder="https://" /></div></label><div className="form-divider"><span>또는</span></div><label className="file-field"><FileUp /><span><strong>{sampleName || '원고 파일 선택'}</strong><small>PDF, DOCX, TXT, HWP · 운영 환경 최대 20MB</small></span><input type="file" accept=".pdf,.doc,.docx,.txt,.hwp" onChange={(event) => setSampleName(event.target.files?.[0]?.name ?? '')} /></label><label>원고 직접 붙여넣기 <small>{sampleExcerpt.length.toLocaleString()}/10,000 · 200자 이상</small><textarea value={sampleExcerpt} onChange={(event) => setSampleExcerpt(event.target.value)} maxLength={10000} placeholder="심사용 원고 일부를 붙여넣어 주세요." /></label></fieldset><div className="editor-notice">데모에서는 파일명만 저장됩니다. 운영 환경에서는 비공개 저장소에 업로드하고 심사자에게만 열람 권한을 부여합니다.</div><div className="form-actions"><button type="button" className="secondary-button" onClick={() => setApplicationOpen(false)}>취소</button><button className="primary-button" disabled={!applicationReady}><Send size={17} /> 심사 신청</button></div></form></Modal>}
+        {applicationOpen && <Modal title="작가 등록 신청" onClose={() => setApplicationOpen(false)} wide><form className="author-application-form" onSubmit={submitApplication}><div className="application-form-grid"><label>필명<input value={penName} onChange={(event) => setPenName(event.target.value)} minLength={2} maxLength={30} placeholder="독자에게 표시할 이름" required /></label><label>주요 장르<select value={genre} onChange={(event) => setGenre(event.target.value)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작가 소개 <small>{introduction.length}/1,000 · 50자 이상</small><textarea value={introduction} onChange={(event) => setIntroduction(event.target.value)} minLength={50} maxLength={1000} placeholder="쓰고 싶은 이야기와 연재 경험을 소개해 주세요." required /></label><fieldset><legend>작품 자료 <small>아래 중 하나 이상 필수</small></legend><label>포트폴리오 링크<div className="input-with-icon"><Link2 /><input type="url" value={portfolioUrl} onChange={(event) => setPortfolioUrl(event.target.value)} maxLength={500} placeholder="https://" /></div></label><div className="form-divider"><span>또는</span></div><label className="file-field"><FileUp /><span><strong>{sampleName || '원고 파일 선택'}</strong><small>PDF, DOCX, TXT, HWP · 최대 20MB · 심사자만 열람</small></span><input type="file" accept=".pdf,.doc,.docx,.txt,.hwp" onChange={(event) => { const file = event.target.files?.[0] ?? null; setSampleFile(file); setSampleName(file?.name ?? ''); }} /></label><label>원고 직접 붙여넣기 <small>{sampleExcerpt.length.toLocaleString()}/10,000 · 200자 이상</small><textarea value={sampleExcerpt} onChange={(event) => setSampleExcerpt(event.target.value)} maxLength={10000} placeholder="심사용 원고 일부를 붙여넣어 주세요." /></label></fieldset><div className="editor-notice">{demoMode ? '데모에서는 파일명만 저장됩니다.' : '첨부 원고는 비공개 저장소에 암호화 전송되며 신청자와 승인된 심사자만 열람할 수 있습니다.'}</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button type="button" className="secondary-button" onClick={() => setApplicationOpen(false)}>취소</button><button className="primary-button" disabled={!applicationReady || submitting}><Send size={17} /> {submitting ? '안전하게 제출 중…' : '심사 신청'}</button></div></form></Modal>}
       </div>
     );
   }
@@ -72,19 +116,20 @@ export function StudioPage() {
   return (
     <div className="studio-page">
       <div className="page-container inner-page">
-        <header className="page-title split-title"><div><span className="section-kicker"><BadgeCheck size={15} /> 승인 작가</span><h1>안녕하세요, {authorApplication.penName} 작가님</h1><p>오늘도 독자들이 작가님의 다음 문장을 기다리고 있어요.</p></div><button className="primary-button" type="button" onClick={() => setEditorOpen(true)}><PenLine size={18} /> 새 회차 쓰기</button></header>
-        <section className="settlement-banner"><div><span>이번 달 예상 정산액</span><strong>₩1,284,600</strong><small>데모 데이터 · 매월 정산서에서 거래별 공제 내역 제공</small></div><Link to="/creator-policy">정산 기준 확인 <ChevronRight size={16} /></Link></section>
-        <div className="studio-stats"><div><span><Eye /></span><p>이번 주 조회</p><strong>18,420</strong><small>지난주보다 12% ↑</small></div><div><span><Users /></span><p>선호 독자</p><strong>8,421</strong><small>오늘 38명 추가</small></div><div><span><MessageCircle /></span><p>새 댓글</p><strong>126</strong><small>답변 대기 14개</small></div><div><span><BarChart3 /></span><p>평균 완독률</p><strong>82.4%</strong><small>상위 10%</small></div></div>
+        <header className="page-title split-title"><div><span className="section-kicker"><BadgeCheck size={15} /> 승인 작가</span><h1>안녕하세요, {authorApplication.penName} 작가님</h1><p>작품을 등록하고 초안을 안전하게 저장한 뒤 원하는 시점에 발행하세요.</p></div><button className="primary-button" type="button" onClick={() => activeWork ? openNewEpisode() : setWorkOpen(true)}>{activeWork ? <><PenLine size={18} /> 새 회차 쓰기</> : <><Plus size={18} /> 첫 작품 등록</>}</button></header>
+        <section className="settlement-banner"><div><span>이번 달 예상 정산액</span><strong>{demoMode ? '₩1,284,600' : '₩0'}</strong><small>{demoMode ? '데모 데이터' : '정산 확정 전'} · 매월 정산서에서 거래별 공제 내역 제공</small></div><Link to="/creator-policy">정산 기준 확인 <ChevronRight size={16} /></Link></section>
+        <div className="studio-stats"><div><span><Eye /></span><p>이번 주 조회</p><strong>{demoMode ? '18,420' : '0'}</strong><small>{demoMode ? '지난주보다 12% ↑' : '집계 전'}</small></div><div><span><Users /></span><p>선호 독자</p><strong>{demoMode ? '8,421' : '0'}</strong><small>{demoMode ? '오늘 38명 추가' : '집계 전'}</small></div><div><span><MessageCircle /></span><p>새 댓글</p><strong>{demoMode ? '126' : '0'}</strong><small>{demoMode ? '답변 대기 14개' : '새 댓글 없음'}</small></div><div><span><BarChart3 /></span><p>평균 완독률</p><strong>{demoMode ? '82.4%' : '-'}</strong><small>{demoMode ? '상위 10%' : '데이터 없음'}</small></div></div>
         <div className="studio-layout">
           <section className="studio-main">
-            <div className="studio-work-card"><div className="studio-cover" style={{ background: sample.color }}><BookOpen /></div><div><span>연재중 · {sample.categoryLabel}</span><h2>{sample.title}</h2><p>총 {sample.chapters.length}화 · {sample.schedule}</p><div className="mini-progress"><span style={{ width: '72%' }} /></div><small>이번 주 연재 목표 3회 중 2회 완료</small></div><button type="button">작품 관리 <ChevronRight /></button></div>
-            <div className="studio-panel"><header><div><h2>회차 관리</h2><p>초안을 이어 쓰거나 발행한 회차를 확인하세요.</p></div><button className="secondary-button small" type="button" onClick={() => setEditorOpen(true)}><Plus size={16} /> 새 회차</button></header><div className="draft-list">{drafts.map((draft) => <button type="button" key={draft.id} onClick={() => { setTitle(draft.title); setBody(draft.body); setEditorOpen(true); }}><span className={draft.status === '발행' ? 'published' : ''}><FileText /></span><div><strong>{draft.title}</strong><small>{draft.status} · {draft.updatedAt}{draft.body && ` · ${draft.body.length.toLocaleString()}자`}</small></div><ChevronRight /></button>)}</div></div>
+            {activeWork ? <div className="studio-work-card"><div className="studio-cover"><BookOpen /></div><div><span>{activeWork.status === 'serializing' ? '연재중' : '준비중'} · {getCategoryLabel(activeWork.category)}</span><h2>{activeWork.title}</h2><p>총 {activeDrafts.length}화</p>{authorWorks.length > 1 && <select aria-label="관리할 작품" value={activeWork.id} onChange={(event) => setActiveWorkId(event.target.value)}>{authorWorks.map((work) => <option key={work.id} value={work.id}>{work.title}</option>)}</select>}<div className="mini-progress"><span style={{ width: activeDrafts.length ? '38%' : '0%' }} /></div><small>{activeWork.synopsis || '작품 소개가 아직 없습니다.'}</small></div><button type="button" onClick={() => setWorkOpen(true)}>새 작품 <Plus /></button></div> : <div className="studio-work-empty"><BookOpen /><div><h2>첫 작품을 등록해 주세요</h2><p>작품 정보는 초안 상태로 저장되며, 첫 회차를 발행하면 독자에게 공개됩니다.</p></div><button className="primary-button" type="button" onClick={() => setWorkOpen(true)}><Plus size={16} /> 작품 등록</button></div>}
+            <div className="studio-panel"><header><div><h2>회차 관리</h2><p>초안을 이어 쓰거나 발행한 회차를 확인하세요.</p></div><button className="secondary-button small" type="button" onClick={() => activeWork ? openNewEpisode() : setWorkOpen(true)}><Plus size={16} /> 새 회차</button></header><div className="draft-list">{activeDrafts.length ? activeDrafts.map((draft) => <button type="button" key={draft.id} onClick={() => { setEditingDraftId(draft.id); setTitle(draft.title); setBody(draft.body); setMessage(''); setEditorOpen(true); }}><span className={draft.status === '발행' ? 'published' : ''}><FileText /></span><div><strong>{draft.chapterNumber}화 · {draft.title}</strong><small>{draft.status} · {draft.updatedAt}{draft.body && ` · ${draft.body.length.toLocaleString()}자`}</small></div><ChevronRight /></button>) : <div className="studio-list-empty">아직 저장한 회차가 없습니다.</div>}</div></div>
           </section>
-          <aside className="studio-side"><div className="schedule-card"><CalendarClock /><h3>다음 연재일</h3><strong>10월 16일 금요일</strong><p>오후 9:00 예약 발행</p><button type="button">일정 관리</button></div><div className="writing-tip"><span>오늘의 집필 팁</span><h3>장면의 끝에는<br />작은 질문을 남겨보세요.</h3><p>독자가 다음 회차를 누르게 만드는 가장 자연스러운 힘은 ‘궁금함’입니다.</p></div></aside>
+          <aside className="studio-side"><div className="schedule-card"><CalendarClock /><h3>연재 일정</h3><strong>회차별 직접 발행</strong><p>초안은 비공개로 저장되고, 발행한 회차만 공개됩니다.</p></div><div className="writing-tip"><span>오늘의 집필 팁</span><h3>장면의 끝에는<br />작은 질문을 남겨보세요.</h3><p>독자가 다음 회차를 누르게 만드는 가장 자연스러운 힘은 ‘궁금함’입니다.</p></div></aside>
         </div>
       </div>
 
-      {editorOpen && <Modal title="새 회차 쓰기" onClose={() => setEditorOpen(false)} wide><form className="episode-editor" onSubmit={submitEpisode}><div className="editor-meta"><label>회차 제목<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="예: 4화. 북쪽으로 가는 길" /></label><span>{body.length.toLocaleString()}자</span></div><label><span className="sr-only">본문</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={50000} placeholder="이야기를 시작하세요…" autoFocus /></label><div className="editor-notice">입력한 텍스트는 HTML로 실행되지 않으며, 운영 환경에서는 서버에서 한 번 더 검증합니다.</div><div className="form-actions"><button className="secondary-button" type="submit" value="draft"><Save size={17} /> 초안 저장</button><button className="primary-button" type="submit" value="publish" disabled={!title.trim() || body.trim().length < 10}><BookOpen size={17} /> 바로 발행</button></div></form></Modal>}
+      {workOpen && <Modal title="새 작품 등록" onClose={() => setWorkOpen(false)} wide><form className="author-application-form" onSubmit={submitWork}><div className="application-form-grid"><label>작품 제목<input value={workTitle} onChange={(event) => setWorkTitle(event.target.value)} minLength={1} maxLength={100} placeholder="작품 제목" required /></label><label>장르<select value={workCategory} onChange={(event) => setWorkCategory(event.target.value as typeof workCategory)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작품 소개 <small>{workSynopsis.length.toLocaleString()}/3,000</small><textarea value={workSynopsis} onChange={(event) => setWorkSynopsis(event.target.value)} maxLength={3000} placeholder="독자에게 보여줄 작품 소개를 작성해 주세요." /></label><div className="editor-notice">작품은 먼저 비공개 초안으로 만들어집니다. 첫 회차를 발행하면 연재중 상태로 전환됩니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={() => setWorkOpen(false)}>취소</button><button className="primary-button" disabled={!workTitle.trim() || submitting}><Plus size={17} /> {submitting ? '등록 중…' : '작품 등록'}</button></div></form></Modal>}
+      {editorOpen && activeWork && <Modal title={`${activeWork.title} · ${editingDraftId ? '회차 수정' : '새 회차'}`} onClose={() => setEditorOpen(false)} wide><form className="episode-editor" onSubmit={submitEpisode}><div className="editor-meta"><label>회차 제목<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="예: 북쪽으로 가는 길" /></label><span>{body.length.toLocaleString()}자</span></div><label><span className="sr-only">본문</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={200000} placeholder="이야기를 시작하세요…" autoFocus /></label><div className="editor-notice">입력한 텍스트는 HTML로 실행되지 않으며, 운영 환경에서는 서버에서 한 번 더 검증합니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="submit" value="draft" disabled={submitting}><Save size={17} /> 초안 저장</button><button className="primary-button" type="submit" value="publish" disabled={submitting || !title.trim() || body.trim().length < 10}><BookOpen size={17} /> 바로 발행</button></div></form></Modal>}
     </div>
   );
 }

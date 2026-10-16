@@ -8,20 +8,23 @@ import { useApp } from '../state/AppContext';
 
 export function NovelPage() {
   const { novelId } = useParams();
-  const novel = getNovel(novelId);
-  const { favorites, toggleFavorite, reactions, setReaction, comments, addComment, unlocked, blockedUsers } = useApp();
+  const { catalogNovels, favorites, toggleFavorite, reactions, setReaction, comments, addComment, unlocked, blockedUsers } = useApp();
+  const novel = catalogNovels.find((item) => item.id === novelId) ?? getNovel(novelId);
   const [comment, setComment] = useState('');
   const [copied, setCopied] = useState(false);
+  const [commentMessage, setCommentMessage] = useState('');
 
   if (!novel) return <Navigate to="/discover" replace />;
   const favorite = favorites.includes(novel.id);
   const reaction = reactions[novel.id];
   const novelComments = (comments[novel.id] ?? []).filter((item) => !blockedUsers.includes(item.author));
 
-  const submitComment = (event: FormEvent) => {
+  const submitComment = async (event: FormEvent) => {
     event.preventDefault();
-    addComment(novel.id, comment);
+    const result = await addComment(novel.id, comment);
+    if (!result.ok) { setCommentMessage(result.reason ?? '댓글을 등록하지 못했습니다.'); return; }
     setComment('');
+    setCommentMessage('댓글을 등록했습니다.');
   };
 
   const share = async () => {
@@ -61,8 +64,8 @@ export function NovelPage() {
 
           <section className="comments-section">
             <div className="content-section-heading"><div><h2>독자 댓글 <span>{novelComments.length}</span></h2><p>작품에 대한 감상을 나눠주세요.</p></div></div>
-            <form className="comment-form" onSubmit={submitComment}><label><span className="sr-only">댓글 내용</span><textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} placeholder="서로를 존중하는 댓글을 남겨주세요." /></label><div><small>{comment.length}/1000</small><button className="primary-button small" disabled={!comment.trim()}>댓글 등록</button></div></form>
-            <div className="comment-list">{novelComments.map((item) => <article key={item.id} className="comment-item"><div className="avatar">{item.author.slice(0, 1)}</div><div><header><strong>{item.author}</strong><small>{item.createdAt}</small></header><p>{item.body}</p><div className="comment-actions"><button type="button"><ThumbsUp size={14} /> 공감</button><ContentSafetyActions targetId={item.id} targetType="comment" author={item.author} /></div></div></article>)}</div>
+            <form className="comment-form" onSubmit={submitComment}><label><span className="sr-only">댓글 내용</span><textarea value={comment} onChange={(event) => { setComment(event.target.value); setCommentMessage(''); }} maxLength={1000} placeholder="서로를 존중하는 댓글을 남겨주세요." /></label><div><small>{comment.length}/1000</small><button className="primary-button small" disabled={!comment.trim()}>댓글 등록</button></div>{commentMessage && <p className="form-message" role="status">{commentMessage}</p>}</form>
+            <div className="comment-list">{novelComments.map((item) => <article key={item.id} className="comment-item"><div className="avatar">{item.author.slice(0, 1)}</div><div><header><strong>{item.author}</strong><small>{item.createdAt}</small></header><p>{item.body}</p><div className="comment-actions"><button type="button"><ThumbsUp size={14} /> 공감</button><ContentSafetyActions targetId={item.id} targetType="comment" author={item.author} authorId={item.authorId} /></div></div></article>)}</div>
           </section>
         </section>
         <aside className="reaction-panel">
