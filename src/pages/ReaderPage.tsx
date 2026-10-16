@@ -105,7 +105,11 @@ export function ReaderPage() {
     if (!supabase || !novel || !isUuid(chapter.id)) return () => { active = false; };
     let sessionId = sessionStorage.getItem('glyph-watermark-session');
     if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem('glyph-watermark-session', sessionId); }
-    void supabase.rpc('issue_reader_watermark', { p_novel_slug: novel.id, p_chapter_id: chapter.id, p_session_id: sessionId }).then(({ data }) => {
+    void supabase.rpc('issue_reader_watermark', { p_novel_slug: novel.id, p_chapter_id: chapter.id, p_session_id: sessionId }).then(({ data, error }) => {
+      if (error) {
+        console.error('[Glyph reader] watermark issue failed', { code: error.code, message: error.message, novelSlug: novel.id, chapterId: chapter.id });
+        return;
+      }
       if (!active) return;
       const row = Array.isArray(data) ? data[0] : data;
       if (row?.token) setForensicToken(String(row.token));
