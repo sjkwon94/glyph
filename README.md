@@ -11,7 +11,7 @@
 - 댓글, 좋아요/싫어요, `전체` 없이 장르별로 분리된 커뮤니티와 글쓰기
 - 요일·장르 단독 및 복합 작품 필터
 - 포트폴리오/원고 예시 제출 → 운영 심사 → 승인 후 연재하는 작가 스튜디오
-- 이메일 회원가입·로그인 UI와 Supabase 세션 연결, 계정·차단 관리 화면
+- Google OAuth 및 이메일 회원가입·로그인 UI와 Supabase 세션 연결, 계정·차단 관리 화면
 - 게시글·댓글 신고와 사용자 차단, 작가 심사·신고 처리 운영자 화면
 - 작가 수익정책(유료 회차 70%, 후원 90%, 보상형 광고 70%)과 정산 데이터 모델
 - 이용약관·개인정보·커뮤니티·작가 정책 초안 페이지
@@ -48,10 +48,11 @@ HashRouter와 상대 `base`를 사용하므로 프로젝트 저장소 Pages 경�
 ## 실제 서비스 연결 순서
 
 1. Supabase 프로젝트 생성 후 `0001`, `0002`, `0003`, `0004` 마이그레이션 적용
-2. `.env.local` 또는 GitHub Actions 변수에 URL과 공개 publishable 키 설정 (`service_role` 금지)
-3. 국내 PG·웹 광고 공급자를 선정하고 제공사 서명 규격을 Edge Function 골격에 연결
-4. 운영자 정보와 정책 문서의 출시 전 자리표시자를 실제 정보로 교체
-5. [운영 아키텍처](docs/ARCHITECTURE.md)와 [보안 체크리스트](docs/SECURITY-CHECKLIST.md) 검토
-6. [출시 체크리스트](docs/RELEASE-CHECKLIST.md)에 따라 웹을 단계적으로 출시
+2. Google Cloud OAuth 웹 클라이언트를 만들고 Supabase Google 공급자에 Client ID와 Secret 등록
+3. `.env.local` 또는 GitHub Actions 변수에 URL과 공개 publishable 키 설정 (`service_role` 금지)
+4. 국내 PG·웹 광고 공급자를 선정하고 제공사 서명 규격을 Edge Function 골격에 연결
+5. 운영자 정보와 정책 문서의 출시 전 자리표시자를 실제 정보로 교체
+6. [운영 아키텍처](docs/ARCHITECTURE.md)와 [보안 체크리스트](docs/SECURITY-CHECKLIST.md) 검토
+7. [출시 체크리스트](docs/RELEASE-CHECKLIST.md)에 따라 웹을 단계적으로 출시
 
 계정 소유자가 해야 할 일은 [외부 설정 목록](docs/EXTERNAL-SETUP.md), 운영 절차는 [운영 런북](docs/OPERATIONS-RUNBOOK.md), 작가 수익 기준은 [정산 정책](docs/AUTHOR-REVENUE-POLICY.md)에 정리했습니다.

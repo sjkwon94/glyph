@@ -17,6 +17,16 @@
 4. 관리자 계정에 MFA를 적용한 뒤 `admin_roles`는 SQL 편집기 또는 서버 운영 도구로만 부여합니다.
 5. Edge Function 비밀에 `PAYMENT_WEBHOOK_SECRET`, `AD_REWARD_WEBHOOK_SECRET`을 설정합니다. `SUPABASE_SERVICE_ROLE_KEY`는 프런트엔드·GitHub 저장소에 두지 않습니다.
 
+## Google 로그인
+
+1. Google Cloud의 Google Auth Platform에서 앱 이름을 `글리프`로 설정하고 웹 OAuth 클라이언트를 만듭니다.
+2. 승인된 JavaScript 원본에 `https://sjkwon94.github.io`를 추가합니다.
+3. 승인된 리디렉션 URI에 Supabase 대시보드의 Google 공급자 화면에 표시되는 Callback URL을 추가합니다.
+4. 발급된 Client ID와 Client Secret은 코드나 GitHub 변수에 넣지 말고 Supabase `Authentication > Sign In / Providers > Google`에만 저장합니다.
+5. Google의 기본 `openid`, `email`, `profile` 범위만 사용하고 민감한 추가 범위는 요청하지 않습니다.
+6. Supabase URL Configuration에는 `https://sjkwon94.github.io/glyph/`를 허용 URL로 유지합니다.
+7. 운영 공개 전 Google 동의 화면의 지원 이메일, 홈페이지, 개인정보처리방침 URL을 실제 정보로 확인합니다.
+
 ## 사업자·결제·광고
 
 1. 운영자 상호, 대표자, 사업자등록번호, 통신판매업 신고, 주소, 고객센터, 개인정보보호 책임자를 확정합니다.
