@@ -631,7 +631,7 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 }
 .reader-content img, .reader-content svg { pointer-events: none; -webkit-user-drag: none; }
 .forensic-watermark-layer { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-.forensic-watermark-layer > span { position: absolute; left: 50%; display: block; transform: translate(-50%, -50%) rotate(-18deg); opacity: .004; }
+.forensic-watermark-layer > span { position: absolute; left: 50%; display: block; transform: translate(-50%, -50%) rotate(-18deg); opacity: .009; }
 .forensic-watermark-pattern { display: block; overflow: visible; }
 .forensic-watermark-pattern rect { fill: currentColor; }
 .reader-visible-watermark { position: fixed; right: 18px; bottom: 66px; z-index: 4; pointer-events: none; color: currentColor; font: 700 8px/1 'Pretendard Variable', Pretendard, sans-serif; letter-spacing: .14em; opacity: .42; user-select: none; }
