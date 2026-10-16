@@ -561,7 +561,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!supabase || !viewer) return { ok: false, reason: '로그인 후 신고할 수 있습니다.' };
       if (!isUuid(reportData.targetId)) return { ok: false, reason: '샘플 콘텐츠는 운영 신고 대상이 아닙니다.' };
       const { data, error } = await supabase.from('content_reports').insert({ reporter_id: viewer.id, target_type: reportData.targetType, target_id: reportData.targetId, reason: reportData.reason, details: reportData.details }).select('id,created_at').single();
-      if (error) return { ok: false, reason: error.message };
+      if (error) {
+        if (reportData.targetType === 'general' && error.code === '23514') return { ok: false, reason: '신고마당 서버 설정이 아직 적용되지 않았습니다. 운영자가 Supabase SQL Editor에서 0006_general_reports.sql을 실행해야 합니다.' };
+        return { ok: false, reason: error.message };
+      }
       let evidenceSummary: ReportEvidenceSummary | undefined;
       if (evidenceFile) {
         const safeName = evidenceFile.name.normalize('NFKC').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-140) || 'evidence';
