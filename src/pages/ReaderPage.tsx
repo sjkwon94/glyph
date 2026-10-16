@@ -144,7 +144,7 @@ export function ReaderPage() {
   return (
     <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
-      <div className="reader-watermark" aria-hidden="true">{viewer ? `${viewer.displayName} · 글리프` : '글리프 · 저작권 보호'}</div>
+      <div className="reader-watermark" aria-hidden="true">{viewer ? `${viewer.displayName} · 글리프 · 무단 복제 금지` : '글리프 · 저작권 보호 · 무단 복제 금지'}</div>
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>
         <div><strong>{novel.title}</strong><span>{chapter.number}화. {chapter.title}</span></div>

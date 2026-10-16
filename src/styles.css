@@ -218,6 +218,38 @@ img { max-width: 100%; }
   .reader-header { padding: 0 8px; }.reader-header > div:last-child .reader-icon-button:nth-child(2) { display: none; }.reader-page-stage { padding: 76px 27px 66px; }.reader-content p { word-break: normal; }.tap-zone { width: 26%; }.tap-zone svg { display: none; }.chapter-heading { padding-top: 3vh; }.reader-settings-sheet { top: auto; right: 0; bottom: 0; width: 100%; max-height: 78dvh; border-radius: 16px 16px 0 0; }.reader-scroll-stage { padding-left: 25px; padding-right: 25px; }.reader-footer > button { width: 55px; font-size: 0; }.reader-footer > button svg { width: 19px; }.reader-progress > div { width: 65%; }
 }
 
+/* Compact community feed: default page size is ten posts, with optional larger pages. */
+.community-feed-tools { display: flex; align-items: center; gap: 8px; }
+.community-feed-tools .search-field.small { width: 220px; }
+.community-controls { display: flex; gap: 7px; }
+.community-controls .sort-field { min-width: 108px; min-height: 39px; }
+.community-page .feed-card { padding-top: 14px; }
+.community-page .post-label-line { font-size: 10px; }
+.community-page .post-label-line .pin-label { padding: 3px 6px; }
+.community-page .feed-card h2 { margin: 7px 0 4px; font-size: 15px; line-height: 1.35; }
+.community-page .feed-card p { font-size: 11px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+.community-page .post-author { margin-top: 8px; gap: 7px; }
+.community-page .post-author span { width: 24px; height: 24px; font-size: 8px; }
+.community-page .post-author strong { font-size: 9px; }
+.community-page .feed-card footer { margin-top: 10px; min-height: 34px; }
+.community-page .feed-card footer > div { gap: 12px; }
+.community-page .feed-card footer span,
+.community-page .feed-card footer button { font-size: 9px; }
+.community-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 17px 0; }
+.community-pagination button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #e5e2ee; color: #5646d6; background: #fff; cursor: pointer; }
+.community-pagination button:disabled { color: #b9b4c7; opacity: .65; cursor: default; }
+.community-pagination span { color: #6b6387; font-size: 11px; }
+
+@media (max-width: 680px) {
+  .community-feed-tools { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .community-feed-tools .search-field.small { width: 100%; max-width: none; }
+  .community-controls .sort-field { flex: 1; min-width: 0; }
+  .community-page .feed-card { padding-top: 13px; }
+  .community-page .feed-card h2 { font-size: 14px; }
+  .community-page .feed-card p { display: none; }
+  .community-page .feed-card footer { min-height: 31px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
@@ -777,4 +809,36 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   .community-page .feed-card h2 { font-size: 18px; }
   .community-page .feed-card p { font-size: 12px; }
   .community-page .feed-card footer { min-height: 48px; }
+}
+
+/* Final compact feed overrides (kept after the community layout rules). */
+.community-feed-tools { display: flex; align-items: center; gap: 8px; }
+.community-feed-tools .search-field.small { width: 220px; }
+.community-controls { display: flex; gap: 7px; }
+.community-controls .sort-field { min-width: 108px; min-height: 39px; }
+.community-page .feed-card { padding-top: 14px; }
+.community-page .post-label-line { font-size: 10px; }
+.community-page .post-label-line .pin-label { padding: 3px 6px; }
+.community-page .feed-card h2 { margin: 7px 0 4px; font-size: 15px; line-height: 1.35; }
+.community-page .feed-card p { font-size: 11px; line-height: 1.45; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; }
+.community-page .post-author { margin-top: 8px; gap: 7px; }
+.community-page .post-author span { width: 24px; height: 24px; font-size: 8px; }
+.community-page .post-author strong { font-size: 9px; }
+.community-page .feed-card footer { margin-top: 10px; min-height: 34px; }
+.community-page .feed-card footer > div { gap: 12px; }
+.community-page .feed-card footer span,
+.community-page .feed-card footer button { font-size: 9px; }
+.community-pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 17px 0; }
+.community-pagination button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #e5e2ee; color: #5646d6; background: #fff; cursor: pointer; }
+.community-pagination button:disabled { color: #b9b4c7; opacity: .65; cursor: default; }
+.community-pagination span { color: #6b6387; font-size: 11px; }
+
+@media (max-width: 680px) {
+  .community-feed-tools { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .community-feed-tools .search-field.small { width: 100%; max-width: none; }
+  .community-controls .sort-field { flex: 1; min-width: 0; }
+  .community-page .feed-card { padding-top: 13px; }
+  .community-page .feed-card h2 { font-size: 14px; }
+  .community-page .feed-card p { display: none; }
+  .community-page .feed-card footer { min-height: 31px; }
 }

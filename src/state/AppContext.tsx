@@ -253,7 +253,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const novelSlugByUuid = Object.fromEntries(Object.entries(catalogNovelIds).map(([slug, id]) => [id, slug]));
 
     void (async () => {
-      const [wallet, unlocks, reactions, comments, application, posts, blocks, reports, works] = await Promise.all([
+      const [wallet, unlocks, reactions, comments, application, posts, blocks, reports, works, postComments, postReactions] = await Promise.all([
         supabase.from('cookie_wallets').select('balance').eq('user_id', viewer.id).maybeSingle(),
         supabase.from('chapter_unlocks').select('chapter_id').eq('user_id', viewer.id),
         supabase.from('reactions').select('target_type,target_id,value').eq('user_id', viewer.id),
@@ -263,6 +263,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from('user_blocks').select('blocked_id,profiles!user_blocks_blocked_id_fkey(display_name)').eq('blocker_id', viewer.id),
         supabase.from('content_reports').select('id,target_type,target_id,reason,details,status,created_at').order('created_at', { ascending: false }).limit(100),
         supabase.from('novels').select('id,slug,title,category,synopsis,status').eq('owner_id', viewer.id).order('updated_at', { ascending: false }),
+        supabase.from('comments').select('post_id').not('post_id', 'is', null).eq('status', 'visible').limit(10000),
+        supabase.from('reactions').select('target_id,value').eq('target_type', 'community_post').limit(10000),
       ]);
       const workIds = (works.data ?? []).map((row) => String(row.id));
       const workChapters = workIds.length
@@ -273,7 +275,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         : { data: [], error: null };
       if (!active) return;
 
-      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, works.error, workChapters.error, applications.error].filter(Boolean);
+      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, works.error, postComments.error, postReactions.error, workChapters.error, applications.error].filter(Boolean);
       if (errors.length) setSyncError(errors[0]?.message ?? '일부 데이터를 불러오지 못했습니다.');
 
       const reactionMap: Record<string, Reaction> = {};
@@ -292,10 +294,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         (commentMap[slug] ??= []).push({ id: String(row.id), author: profile.display_name ?? '글리프 독자', authorId: profile.id, body: String(row.body), createdAt: displayDate(row.created_at) });
       }
 
+      const postCommentCounts = new Map<string, number>();
+      for (const row of postComments.data ?? []) {
+        const postId = String(row.post_id ?? '');
+        if (postId) postCommentCounts.set(postId, (postCommentCounts.get(postId) ?? 0) + 1);
+      }
+      const postLikeCounts = new Map<string, number>();
+      for (const row of postReactions.data ?? []) {
+        if (row.value !== 1) continue;
+        const postId = String(row.target_id ?? '');
+        if (postId) postLikeCounts.set(postId, (postLikeCounts.get(postId) ?? 0) + 1);
+      }
+
       const remotePosts: CommunityPostItem[] = (posts.data ?? []).map((row) => {
         const profile = relatedProfile(row.profiles);
         const category = row.category as Exclude<CategoryId, 'all'>;
-        return { id: String(row.id), category, categoryLabel: getCategoryLabel(category), title: String(row.title), body: String(row.body), author: profile.display_name ?? '글리프 독자', authorId: profile.id, createdAt: displayDate(row.created_at), views: 0, comments: 0, likes: 0 };
+        const postId = String(row.id);
+        return { id: postId, category, categoryLabel: getCategoryLabel(category), title: String(row.title), body: String(row.body), author: profile.display_name ?? '글리프 독자', authorId: profile.id, createdAt: displayDate(row.created_at), views: 0, comments: postCommentCounts.get(postId) ?? 0, likes: postLikeCounts.get(postId) ?? 0 };
       });
 
       setState((previous) => ({
