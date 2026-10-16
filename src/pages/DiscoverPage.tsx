@@ -4,12 +4,14 @@ import { useSearchParams } from 'react-router-dom';
 import { NovelCard } from '../components/NovelCard';
 import { categories, type CategoryId, novels, type WeekdayId, weekdays } from '../data';
 import { useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 
 type DayFilter = 'all' | WeekdayId;
 
 export function DiscoverPage() {
   const { catalogNovels } = useApp();
-  const visibleNovels = catalogNovels.length ? catalogNovels : novels;
+  const { demoMode } = useAuth();
+  const visibleNovels = catalogNovels.length ? catalogNovels : demoMode ? novels : [];
   const [params, setParams] = useSearchParams();
   const initial = (params.get('category') as CategoryId) || 'all';
   const initialDay = (params.get('day') as DayFilter) || 'all';

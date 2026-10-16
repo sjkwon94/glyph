@@ -5,16 +5,18 @@ import { BookCover } from '../components/BookCover';
 import { ContentSafetyActions } from '../components/ContentSafetyActions';
 import { getNovel } from '../data';
 import { useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 
 export function NovelPage() {
   const { novelId } = useParams();
-  const { catalogNovels, favorites, toggleFavorite, reactions, setReaction, comments, addComment, unlocked, blockedUsers } = useApp();
-  const novel = catalogNovels.find((item) => item.id === novelId) ?? getNovel(novelId);
+  const { catalogNovels, syncing, favorites, toggleFavorite, reactions, setReaction, comments, addComment, unlocked, blockedUsers } = useApp();
+  const { demoMode } = useAuth();
+  const novel = catalogNovels.find((item) => item.id === novelId) ?? (demoMode ? getNovel(novelId) : undefined);
   const [comment, setComment] = useState('');
   const [copied, setCopied] = useState(false);
   const [commentMessage, setCommentMessage] = useState('');
 
-  if (!novel) return <Navigate to="/discover" replace />;
+  if (!novel) return syncing ? <div className="page-loader" role="status">작품을 안전하게 불러오는 중입니다…</div> : <Navigate to="/discover" replace />;
   const favorite = favorites.includes(novel.id);
   const reaction = reactions[novel.id];
   const novelComments = (comments[novel.id] ?? []).filter((item) => !blockedUsers.includes(item.author));

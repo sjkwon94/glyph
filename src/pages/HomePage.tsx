@@ -4,11 +4,15 @@ import { BookCover } from '../components/BookCover';
 import { NovelCard } from '../components/NovelCard';
 import { categories, communityPosts, novels } from '../data';
 import { useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 
 export function HomePage() {
   const { catalogNovels } = useApp();
-  const visibleNovels = catalogNovels.length ? catalogNovels : novels;
+  const { demoMode } = useAuth();
+  const visibleNovels = catalogNovels.length ? catalogNovels : demoMode ? novels : [];
   const featured = visibleNovels[0];
+
+  if (!featured) return <div className="page-loader" role="status">작품을 안전하게 불러오는 중입니다…</div>;
 
   return (
     <>

@@ -43,11 +43,11 @@ function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficie
 }
 
 export function ReaderPage() {
-  const { demoMode } = useAuth();
+  const { demoMode, viewer } = useAuth();
   const { novelId, chapterId } = useParams();
   const navigate = useNavigate();
-  const { catalogNovels, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
-  const novel = catalogNovels.find((item) => item.id === novelId) ?? getNovel(novelId);
+  const { catalogNovels, syncing, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
+  const novel = catalogNovels.find((item) => item.id === novelId) ?? (demoMode ? getNovel(novelId) : undefined);
   const chapterIndex = novel?.chapters.findIndex((item) => item.id === chapterId) ?? -1;
   const chapter = chapterIndex >= 0 ? novel?.chapters[chapterIndex] : undefined;
   const [page, setPage] = useState(0);
@@ -116,7 +116,7 @@ export function ReaderPage() {
     return () => window.removeEventListener('keydown', keyboard);
   }, [next, previous]);
 
-  if (!novel || !chapter) return <Navigate to="/discover" replace />;
+  if (!novel || !chapter) return syncing ? <div className="reader-loading">작품을 안전하게 불러오는 중입니다…</div> : <Navigate to="/discover" replace />;
 
   const progress = readerSettings.mode === 'scroll' ? scrollProgress : safePercent(page + 1, pages.length);
   const themeStyles = { '--reader-size': `${readerSettings.fontSize}px`, '--reader-leading': readerSettings.lineHeight, '--reader-width': `${readerSettings.contentWidth}px`, '--reader-brightness': readerSettings.brightness / 100 } as React.CSSProperties;
@@ -142,8 +142,9 @@ export function ReaderPage() {
   };
 
   return (
-    <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles}>
+    <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
+      <div className="reader-watermark" aria-hidden="true">{viewer ? `${viewer.displayName} · 글리프` : '글리프 · 저작권 보호'}</div>
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>
         <div><strong>{novel.title}</strong><span>{chapter.number}화. {chapter.title}</span></div>
@@ -155,7 +156,7 @@ export function ReaderPage() {
       ) : readerSettings.mode === 'page' ? (
         <main className="reader-page-stage" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={(event) => { if (touchStart.current === null) return; const diff = event.changedTouches[0].clientX - touchStart.current; if (Math.abs(diff) > 55) diff > 0 ? previous() : next(); touchStart.current = null; }}>
           <button className="tap-zone tap-left" type="button" onClick={previous} aria-label="이전 페이지"><ChevronLeft /></button>
-          <article className="reader-content" onClick={() => { if (window.getSelection()?.toString()) return; setChromeVisible((visible) => !visible); }}>
+          <article className="reader-content" draggable={false} onCopy={(event) => event.preventDefault()} onCut={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} onContextMenu={(event) => event.preventDefault()} onClick={() => { if (window.getSelection()?.toString()) return; setChromeVisible((visible) => !visible); }}>
             {page === 0 && <div className="chapter-heading"><span>{chapter.number}화</span><h1>{chapter.title}</h1><i /></div>}
             {pages[page].map((paragraph, index) => <p key={`${page}-${index}`}>{paragraph}</p>)}
             {page === pages.length - 1 && <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p>{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>}
@@ -164,7 +165,7 @@ export function ReaderPage() {
         </main>
       ) : (
         <main className="reader-scroll-stage" ref={scrollRef} onScroll={onScroll}>
-          <article className="reader-content scroll-content" onClick={() => setChromeVisible((visible) => !visible)}>
+          <article className="reader-content scroll-content" draggable={false} onCopy={(event) => event.preventDefault()} onCut={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} onContextMenu={(event) => event.preventDefault()} onClick={() => setChromeVisible((visible) => !visible)}>
             <div className="chapter-heading"><span>{chapter.number}화</span><h1>{chapter.title}</h1><i /></div>
             {chapter.content.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
             <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p>{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>
