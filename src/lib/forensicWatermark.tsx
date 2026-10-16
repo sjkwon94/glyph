@@ -90,12 +90,20 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
       return cells;
     };
     const finders = [markerCells(1, 1), markerCells(1, GRID_SIZE - 6), markerCells(GRID_SIZE - 6, 1)];
-    const candidate = (originX: number, originY: number, regionSize: number) => {
-      if (originX < 0 || originY < 0 || originX + regionSize >= width || originY + regionSize >= height) return null;
+    const candidate = (originX: number, originY: number, regionSize: number, angle = 0) => {
+      const radians = angle * Math.PI / 180;
+      const cosine = Math.cos(radians);
+      const sine = Math.sin(radians);
+      const centerX = originX + regionSize / 2;
+      const centerY = originY + regionSize / 2;
+      const halfDiagonal = regionSize * Math.SQRT2 / 2;
+      if (centerX - halfDiagonal < 0 || centerY - halfDiagonal < 0 || centerX + halfDiagonal >= width || centerY + halfDiagonal >= height) return null;
       const values: number[] = [];
       for (let row = 0; row < GRID_SIZE; row += 1) for (let column = 0; column < GRID_SIZE; column += 1) {
-        const x = originX + (column + .5) * regionSize / GRID_SIZE;
-        const y = originY + (row + .5) * regionSize / GRID_SIZE;
+        const localX = ((column + .5) / GRID_SIZE - .5) * regionSize;
+        const localY = ((row + .5) / GRID_SIZE - .5) * regionSize;
+        const x = centerX + localX * cosine - localY * sine;
+        const y = centerY + localX * sine + localY * cosine;
         values.push(sample(x, y));
       }
       const metrics = finders.map((cells) => {
@@ -132,14 +140,15 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
       dimensionBase * 1.5,
       dimensionBase * 1.9,
     ].map((size) => Math.max(22, Math.round(size)))));
-    const candidates: { x: number; y: number; size: number }[] = [];
-    for (const size of sizes) for (const [top, left] of WATERMARK_PLACEMENTS) candidates.push({ x: width * left / 100 - size / 2, y: height * top / 100 - size / 2, size });
+    const angles = [0, -18, 18, -12, 12];
+    const candidates: { x: number; y: number; size: number; angle: number }[] = [];
+    for (const size of sizes) for (const [top, left] of WATERMARK_PLACEMENTS) for (const angle of angles) candidates.push({ x: width * left / 100 - size / 2, y: height * top / 100 - size / 2, size, angle });
     const coarseStep = Math.max(24, Math.round(Math.min(width, height) / 18));
-    for (const size of sizes.slice(1, 4)) for (let y = 0; y <= height - size; y += coarseStep) for (let x = 0; x <= width - size; x += coarseStep) candidates.push({ x, y, size });
+    for (const size of sizes.slice(1, 4)) for (let y = 0; y <= height - size; y += coarseStep) for (let x = 0; x <= width - size; x += coarseStep) for (const angle of angles) candidates.push({ x, y, size, angle });
 
     let best: { values: number[]; markerScore: number; contrast: number; threshold: number } | null = null;
     for (const item of candidates) {
-      const result = candidate(item.x, item.y, item.size);
+      const result = candidate(item.x, item.y, item.size, item.angle);
       if (result && (!best || result.markerScore > best.markerScore || (result.markerScore === best.markerScore && result.contrast > best.contrast))) best = result;
     }
     const markerScore = best?.markerScore ?? 0;
