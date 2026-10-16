@@ -562,8 +562,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!isUuid(reportData.targetId)) return { ok: false, reason: '샘플 콘텐츠는 운영 신고 대상이 아닙니다.' };
       const { data, error } = await supabase.from('content_reports').insert({ reporter_id: viewer.id, target_type: reportData.targetType, target_id: reportData.targetId, reason: reportData.reason, details: reportData.details }).select('id,created_at').single();
       if (error) {
-        if (reportData.targetType === 'general' && error.code === '23514') return { ok: false, reason: '신고마당 서버 설정이 아직 적용되지 않았습니다. 운영자가 Supabase SQL Editor에서 0006_general_reports.sql을 실행해야 합니다.' };
-        return { ok: false, reason: error.message };
+        console.error('[Glyph report] report insert failed', { code: error.code, message: error.message, targetType: reportData.targetType });
+        return { ok: false, reason: '신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
       }
       let evidenceSummary: ReportEvidenceSummary | undefined;
       if (evidenceFile) {
@@ -571,12 +571,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const storagePath = `${viewer.id}/${data.id}/${crypto.randomUUID()}-${safeName}`;
         const detection: WatermarkDetection = await detectForensicWatermark(evidenceFile);
         const upload = await supabase.storage.from('report-evidence').upload(storagePath, evidenceFile, { upsert: false, contentType: evidenceFile.type });
-        if (upload.error) return { ok: false, reason: `신고는 접수됐지만 사진 저장에 실패했습니다: ${upload.error.message}` };
+        if (upload.error) {
+          console.error('[Glyph report] evidence upload failed', { code: upload.error.name, message: upload.error.message, reportId: data.id });
+          return { ok: false, reason: '신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+        }
         const digest = await crypto.subtle.digest('SHA-256', await evidenceFile.arrayBuffer());
         const sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
         const { data: evidenceRow, error: evidenceInsertError } = await supabase.from('content_report_evidence').insert({ report_id: data.id, reporter_id: viewer.id, storage_path: storagePath, file_name: evidenceFile.name.slice(0, 180), mime_type: evidenceFile.type, size_bytes: evidenceFile.size, sha256, detection_status: detection.detected ? 'queued' : 'not_detected', detected_token: detection.token ?? null, confidence: detection.confidence, detector_note: detection.note }).select('id').single();
-        if (evidenceInsertError) { await supabase.storage.from('report-evidence').remove([storagePath]); return { ok: false, reason: `신고는 접수됐지만 증거 등록에 실패했습니다: ${evidenceInsertError.message}` }; }
-        if (detection.token) await supabase.rpc('match_report_watermark', { p_evidence_id: evidenceRow.id, p_token: detection.token });
+        if (evidenceInsertError) {
+          console.error('[Glyph report] evidence record failed', { code: evidenceInsertError.code, message: evidenceInsertError.message, reportId: data.id });
+          await supabase.storage.from('report-evidence').remove([storagePath]);
+          return { ok: false, reason: '신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+        }
+        if (detection.token) {
+          const { error: matchError } = await supabase.rpc('match_report_watermark', { p_evidence_id: evidenceRow.id, p_token: detection.token });
+          if (matchError) console.warn('[Glyph report] watermark match deferred', { code: matchError.code, message: matchError.message, evidenceId: evidenceRow.id });
+        }
         evidenceSummary = { id: String(evidenceRow.id), fileName: evidenceFile.name, status: detection.token ? 'queued' : 'not_detected', confidence: detection.confidence, note: detection.note };
       }
       commit((previous) => ({ ...previous, reports: [{ ...reportData, id: String(data.id), status: 'received', createdAt: displayDate(data.created_at), evidence: evidenceSummary }, ...previous.reports] }));

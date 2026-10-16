@@ -533,13 +533,17 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .novel-description { color: #666; line-height: 1.7; }
 .tag-row { margin: 14px 0 20px; }
 .tag-row span { color: #5646d6; }
-.novel-actions .secondary-button { color: #222; border-color: #d7d7d7; }
-.novel-actions .secondary-button:hover, .novel-actions .secondary-button.selected { background: #f7f7f7; }
-.novel-actions .bordered { color: #555; border-color: #d7d7d7; }
+.novel-actions .secondary-button { color: #5646d6; border-color: #d8d1ff; }
+.novel-actions .secondary-button:hover, .novel-actions .secondary-button.selected { color: #4c3cae; background: #f0edff; }
+.novel-actions .bordered { color: #5646d6; border-color: #d8d1ff; }
 .copy-toast { color: #555; }
-.reaction-panel { border-color: #e5e5e5; box-shadow: none; }
-.reaction-panel > a { background: #222; }
-.chapter-row:hover { background: #f8f8f8; }
+.reaction-panel { border-color: #e7e2ff; box-shadow: none; }
+.reaction-panel > div button { border-color: #e7e2ff; background: #faf9ff; }
+.reaction-panel button.selected.positive { color: #6c5ce7; border-color: #c8c1f3; background: #f0edff; }
+.reaction-panel button.selected.negative { color: #857aa9; border-color: #d8d1ff; background: #f6f4ff; }
+.reaction-panel > a { background: #6c5ce7; }
+.reaction-panel > a:hover { background: #5646d6; }
+.chapter-row:hover { background: #faf9ff; }
 
 .community-page .page-title, .studio-page .page-title, .wallet-page .page-title { margin-bottom: 32px; }
 .community-guide, .schedule-card { background: #222; }
