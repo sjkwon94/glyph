@@ -302,6 +302,14 @@ img { max-width: 100%; }
 .account-card dt, .review-item dt { color: #888; }
 .account-card dd, .review-item dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .account-card .danger { margin-top: 12px; color: #a84040; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.report-page { max-width: 780px; }
+.report-card { max-width: 760px; }
+.report-card .report-success { min-height: 240px; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; }
+.report-card .report-success > svg { width: 42px; height: 42px; color: var(--accent); }
+.report-card .report-success h2, .report-card .report-success p { margin: 0; }
+.report-card .report-success p { max-width: 480px; color: var(--muted); line-height: 1.7; }
+.field-counter { display: block; color: #999; font-size: 11px; text-align: right; }
 .blocked-list { margin: 0; padding: 0; list-style: none; }
 .blocked-list li { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #eee; }
 .blocked-list button, .report-queue button { border: 0; color: var(--accent-dark); background: none; font-size: 12px; font-weight: 700; }

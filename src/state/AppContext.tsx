@@ -48,7 +48,7 @@ type Reaction = 'like' | 'dislike' | null;
 export type ModerationReport = {
   id: string;
   targetId: string;
-  targetType: 'comment' | 'community_post';
+  targetType: 'comment' | 'community_post' | 'general';
   targetAuthor: string;
   reason: 'spam' | 'abuse' | 'spoiler' | 'copyright' | 'other';
   details: string;

@@ -10,6 +10,7 @@ const CommunityPage = lazy(() => import('./pages/CommunityPage').then((module) =
 const StudioPage = lazy(() => import('./pages/StudioPage').then((module) => ({ default: module.StudioPage })));
 const WalletPage = lazy(() => import('./pages/WalletPage').then((module) => ({ default: module.WalletPage })));
 const AccountPage = lazy(() => import('./pages/AccountPage').then((module) => ({ default: module.AccountPage })));
+const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then((module) => ({ default: module.AdminPage })));
 const AuthPage = lazy(() => import('./pages/AuthPage').then((module) => ({ default: module.AuthPage })));
 const PolicyPage = lazy(() => import('./pages/PolicyPage').then((module) => ({ default: module.PolicyPage })));
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/terms" element={<PolicyPage kind="terms" />} />
         <Route path="/privacy" element={<PolicyPage kind="privacy" />} />
