@@ -665,3 +665,83 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   .double-event-banner { padding: 16px; grid-template-columns: 1fr auto; gap: 9px; }
   .double-event-banner > span { width: fit-content; }.double-event-banner > div { grid-column: 1 / -1; grid-row: 2; }.double-event-banner > b { grid-column: 2; grid-row: 1; }
 }
+
+/* Community layout refresh: top genre navigation and a roomier feed */
+.community-category-tabs {
+  margin: -6px 0 30px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  border: 1px solid #e5e2ee;
+  background: #fff;
+}
+.community-category-tabs > strong {
+  flex: 0 0 34px;
+  padding-top: 10px;
+  color: #55505f;
+  font-size: 12px;
+}
+.community-category-options {
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.community-category-options button {
+  min-height: 40px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  border: 1px solid #e5e2ee;
+  border-radius: 22px;
+  color: #494354;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.community-category-options button > span { color: #8b7bd3; font-size: 14px; }
+.community-category-options button small { color: #a39cb3; font-size: 10px; }
+.community-category-options button:hover { border-color: #b7acf0; background: #faf9ff; }
+.community-category-options button.active { color: #fff; border-color: #6c5ce7; background: #6c5ce7; box-shadow: 0 5px 12px rgba(108,92,231,.18); }
+.community-category-options button.active > span,
+.community-category-options button.active small { color: rgba(255,255,255,.78); }
+.community-layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 40px; }
+.community-page .feed-toolbar { min-height: 58px; }
+.community-page .feed-toolbar > div strong { font-size: 18px; }
+.community-page .feed-toolbar > div span { margin-top: 4px; display: block; font-size: 11px; }
+.community-page .feed-card { padding-top: 30px; }
+.community-page .post-label-line { font-size: 11px; }
+.community-page .post-label-line .pin-label { padding: 4px 7px; }
+.community-page .feed-card h2 { margin: 12px 0 8px; font-size: 21px; letter-spacing: -.035em; }
+.community-page .feed-card p { font-size: 13px; line-height: 1.75; }
+.community-page .post-author { margin-top: 18px; gap: 9px; }
+.community-page .post-author span { width: 30px; height: 30px; font-size: 10px; }
+.community-page .post-author strong { font-size: 11px; }
+.community-page .feed-card footer { margin-top: 22px; min-height: 52px; }
+.community-page .feed-card footer > div { gap: 16px; }
+.community-page .feed-card footer span,
+.community-page .feed-card footer button { font-size: 11px; }
+.community-page .community-side { top: 104px; }
+
+@media (max-width: 900px) {
+  .community-layout { grid-template-columns: minmax(0, 1fr) 220px; gap: 24px; }
+}
+
+@media (max-width: 680px) {
+  .community-category-tabs { margin: -3px -16px 22px; padding: 14px 16px 16px; display: block; }
+  .community-category-tabs > strong { display: block; padding: 0 0 10px; }
+  .community-category-options { margin-right: -16px; padding-right: 16px; }
+  .community-category-options button { min-height: 38px; padding: 0 13px; font-size: 12px; }
+  .community-layout { display: block; }
+  .community-page .feed-toolbar { align-items: stretch; flex-direction: column; gap: 12px; padding-bottom: 15px; }
+  .community-page .search-field.small { width: 100%; max-width: none; }
+  .community-page .feed-card { padding-top: 24px; }
+  .community-page .feed-card h2 { font-size: 18px; }
+  .community-page .feed-card p { font-size: 12px; }
+  .community-page .feed-card footer { min-height: 48px; }
+}
