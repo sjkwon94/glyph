@@ -5,7 +5,6 @@ import { Modal } from '../components/Modal';
 import { getNovel } from '../data';
 import { EVENT_AD_REWARD } from '../promotions';
 import { paginateParagraphs, safePercent } from '../readerUtils';
-import { WatermarkPattern } from '../lib/forensicWatermark';
 import { isUuid } from '../lib/platformIds';
 import { supabase } from '../lib/supabase';
 import { type ReaderTheme, useApp } from '../state/AppContext';
@@ -45,22 +44,6 @@ function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficie
   );
 }
 
-function ForensicWatermarkOverlay({ token }: { token: string }) {
-  const placements = [
-    ['12%', '16%'], ['12%', '50%'], ['12%', '84%'],
-    ['32%', '16%'], ['32%', '50%'], ['32%', '84%'],
-    ['52%', '16%'], ['52%', '50%'], ['52%', '84%'],
-    ['72%', '16%'], ['72%', '50%'], ['72%', '84%'],
-    ['92%', '16%'], ['92%', '50%'], ['92%', '84%'],
-  ];
-  return <div className="forensic-watermark-layer" aria-hidden="true">{placements.map(([top, left], index) => <span key={`${top}-${left}-${index}`} style={{ top, left }}><WatermarkPattern token={token} size={116} /></span>)}</div>;
-}
-
-function VisibleReaderWatermark({ token }: { token: string }) {
-  const shortToken = token.replace(/[^a-f0-9]/gi, '').slice(0, 8).toUpperCase();
-  return shortToken ? <div className="reader-visible-watermark" aria-hidden="true">GLYPH · {shortToken}</div> : null;
-}
-
 export function ReaderPage() {
   const { demoMode } = useAuth();
   const { novelId, chapterId } = useParams();
@@ -78,7 +61,7 @@ export function ReaderPage() {
   const [insufficient, setInsufficient] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [forensicToken, setForensicToken] = useState('');
+  const [, setForensicToken] = useState('');
   const touchStart = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -186,7 +169,6 @@ export function ReaderPage() {
   return (
     <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
-      {forensicToken && <><ForensicWatermarkOverlay token={forensicToken} /><VisibleReaderWatermark token={forensicToken} /></>}
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>
         <div><strong>{novel.title}</strong><span>{chapter.number}화. {chapter.title}</span></div>
