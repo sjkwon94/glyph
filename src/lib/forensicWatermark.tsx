@@ -115,8 +115,12 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
         const correct = cells.filter((cell) => (values[cell.y * GRID_SIZE + cell.x] < threshold) === cell.on).length;
         return { score: correct / cells.length, contrast: offMean - onMean, threshold };
       });
-      const markerScore = metrics.reduce((sum, item) => sum + item.score, 0) / metrics.length;
-      const contrast = metrics.reduce((sum, item) => sum + item.contrast, 0) / metrics.length;
+      // Text underneath a faint mark can corrupt one finder marker. Use the
+      // strongest two of three markers for the candidate gate, while keeping
+      // the full grid payload for the server-side token match.
+      const reliableMetrics = [...metrics].sort((left, right) => right.score - left.score).slice(0, 2);
+      const markerScore = reliableMetrics.reduce((sum, item) => sum + item.score, 0) / reliableMetrics.length;
+      const contrast = reliableMetrics.reduce((sum, item) => sum + item.contrast, 0) / reliableMetrics.length;
       return { values, markerScore, contrast, threshold: metrics.reduce((sum, item) => sum + item.threshold, 0) / metrics.length };
     };
 
@@ -143,8 +147,12 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
     const angles = [0, -18, 18, -12, 12];
     const candidates: { x: number; y: number; size: number; angle: number }[] = [];
     for (const size of sizes) for (const [top, left] of WATERMARK_PLACEMENTS) for (const angle of angles) candidates.push({ x: width * left / 100 - size / 2, y: height * top / 100 - size / 2, size, angle });
-    const coarseStep = Math.max(24, Math.round(Math.min(width, height) / 18));
-    for (const size of sizes.slice(1, 4)) for (let y = 0; y <= height - size; y += coarseStep) for (let x = 0; x <= width - size; x += coarseStep) for (const angle of angles) candidates.push({ x, y, size, angle });
+    // A screenshot may be cropped, browser-zoomed, or exported at a different
+    // device scale, so the percentage placements are only a fast path. Search
+    // every candidate size in a coarser pass as well; the server token match is
+    // still required before any reader identity can be shown.
+    const coarseStep = Math.max(24, Math.round(Math.min(width, height) / 24));
+    for (const size of sizes) for (let y = 0; y <= height - size; y += coarseStep) for (let x = 0; x <= width - size; x += coarseStep) for (const angle of angles) candidates.push({ x, y, size, angle });
 
     let best: { values: number[]; markerScore: number; contrast: number; threshold: number } | null = null;
     for (const item of candidates) {
