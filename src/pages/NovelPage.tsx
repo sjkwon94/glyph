@@ -60,7 +60,7 @@ export function NovelPage() {
           <div className="chapter-list">
             {[...novel.chapters].reverse().map((chapter) => {
               const isUnlocked = chapter.price === 0 || unlocked.includes(chapter.id);
-              return <Link key={chapter.id} to={`/read/${novel.id}/${chapter.id}`} className="chapter-row"><div><strong>{chapter.number}화. {chapter.title}</strong><small>{chapter.publishedAt} · {chapter.words.toLocaleString()}자</small></div><span className={isUnlocked ? 'unlocked' : ''}>{isUnlocked ? <><Play size={16} /> 읽기</> : <><LockKeyhole size={15} /> {chapter.price} 쿠키</>}</span></Link>;
+              return <Link key={chapter.id} to={`/read/${novel.id}/${chapter.id}`} className="chapter-row"><div><strong>{chapter.number}화. {chapter.title}</strong><small>{chapter.publishedAt}</small></div><span className={isUnlocked ? 'unlocked' : ''}>{isUnlocked ? <><Play size={16} /> 읽기</> : <><LockKeyhole size={15} /> {chapter.price} 쿠키</>}</span></Link>;
             })}
           </div>
 
