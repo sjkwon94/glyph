@@ -575,6 +575,28 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .popular-label { background: var(--accent); }
 .site-footer { width: min(1120px, calc(100% - 40px)); }
 
+/* Studio purple tone */
+.studio-page { background: #faf9ff; }
+.studio-page .studio-stats > div > span { color: #6c5ce7; background: #f0edff; }
+.studio-page .studio-stats small { color: #6c5ce7; }
+.studio-page .studio-work-card { color: #fff; background: linear-gradient(135deg, #40347e 0%, #2b2455 100%); }
+.studio-page .studio-cover { border-color: rgba(218,211,255,.35); }
+.studio-page .studio-work-card > div:nth-child(2) > span { color: #d8d1ff; }
+.studio-page .mini-progress { background: #5b4f9c; }
+.studio-page .mini-progress span { background: #b9b0ff; }
+.studio-page .studio-work-card small { color: #d0caff; }
+.studio-page .studio-work-card > button { color: #ddd8ff; }
+.studio-page .draft-list > button:hover { background: #faf9ff; }
+.studio-page .draft-list > button > span { color: #6c5ce7; background: #f0edff; }
+.studio-page .draft-list > button > span.published { color: #5646d6; background: #e9e5ff; }
+.studio-page .schedule-card { background: linear-gradient(135deg, #6c5ce7 0%, #4c3cae 100%); }
+.studio-page .schedule-card > svg { color: #ded9ff; }
+.studio-page .schedule-card h3 { color: #eeeaff; }
+.studio-page .schedule-card p { color: #ddd8ff; }
+.studio-page .writing-tip { border-color: #e7e2ff; background: #f7f5ff; }
+.studio-page .writing-tip > span { color: #6c5ce7; }
+.studio-page .writing-tip p { color: #756d96; }
+
 .creator-approval-hero { min-height: 370px; padding: 45px 50px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; position: relative; color: white; background: #211d35; }
 .creator-approval-hero > div { position: relative; z-index: 2; }
 .approval-badge { display: inline-flex; align-items: center; gap: 6px; color: #cfc8ff; font-size: 11px; font-weight: 700; }
