@@ -50,7 +50,7 @@ function ForensicWatermarkOverlay({ token }: { token: string }) {
 }
 
 export function ReaderPage() {
-  const { demoMode, viewer } = useAuth();
+  const { demoMode } = useAuth();
   const { novelId, chapterId } = useParams();
   const navigate = useNavigate();
   const { catalogNovels, syncing, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
@@ -170,7 +170,6 @@ export function ReaderPage() {
   return (
     <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
-      <div className="reader-watermark" aria-hidden="true">{viewer ? `${viewer.displayName} · 글리프 · 무단 복제 금지` : '글리프 · 저작권 보호 · 무단 복제 금지'}</div>
       {forensicToken && <ForensicWatermarkOverlay token={forensicToken} />}
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>

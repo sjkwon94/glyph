@@ -615,21 +615,6 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   -webkit-touch-callout: none;
 }
 .reader-content img, .reader-content svg { pointer-events: none; -webkit-user-drag: none; }
-.reader-watermark {
-  position: fixed;
-  inset: 0;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  color: currentColor;
-  opacity: .08;
-  pointer-events: none;
-  transform: rotate(-24deg);
-  font-size: clamp(18px, 3vw, 34px);
-  font-weight: 700;
-  letter-spacing: .08em;
-  white-space: nowrap;
-}
 .forensic-watermark-layer { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
 .forensic-watermark-layer > span { position: absolute; left: 50%; display: block; transform: translate(-50%, -50%) rotate(-18deg); opacity: .16; }
 .forensic-watermark-pattern { display: block; overflow: visible; }
