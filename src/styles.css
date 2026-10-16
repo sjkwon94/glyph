@@ -343,6 +343,7 @@ img { max-width: 100%; }
 .evidence-result.evidence-needs_review { border-color: #f0d59b; background: #fffaf0; }
 .evidence-result.evidence-needs_review strong { color: #976715; }
 .policy-page { max-width: 820px; }
+.policy-watermark-notice { margin: 0 0 20px; padding: 12px 14px; border: 1px solid #ded8ff; border-radius: 8px; background: #faf9ff; color: #62569a; font-size: 12px; line-height: 1.6; }
 .policy-document { padding: 0 5px 25px; }
 .policy-document h2 { margin: 30px 0 9px; font-size: 20px; }
 .policy-document p, .policy-document li { color: #444; font-size: 15px; line-height: 1.85; }
@@ -633,6 +634,7 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .forensic-watermark-layer > span { position: absolute; left: 50%; display: block; transform: translate(-50%, -50%) rotate(-18deg); opacity: .018; }
 .forensic-watermark-pattern { display: block; overflow: visible; }
 .forensic-watermark-pattern rect { fill: currentColor; }
+.reader-visible-watermark { position: fixed; right: 18px; bottom: 66px; z-index: 4; pointer-events: none; color: currentColor; font: 700 8px/1 'Pretendard Variable', Pretendard, sans-serif; letter-spacing: .14em; opacity: .42; user-select: none; }
 .reader-loading {
   width: 100vw;
   height: 100dvh;

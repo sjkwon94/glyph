@@ -56,6 +56,11 @@ function ForensicWatermarkOverlay({ token }: { token: string }) {
   return <div className="forensic-watermark-layer" aria-hidden="true">{placements.map(([top, left], index) => <span key={`${top}-${left}-${index}`} style={{ top, left }}><WatermarkPattern token={token} size={116} /></span>)}</div>;
 }
 
+function VisibleReaderWatermark({ token }: { token: string }) {
+  const shortToken = token.replace(/[^a-f0-9]/gi, '').slice(0, 8).toUpperCase();
+  return shortToken ? <div className="reader-visible-watermark" aria-hidden="true">GLYPH · {shortToken}</div> : null;
+}
+
 export function ReaderPage() {
   const { demoMode } = useAuth();
   const { novelId, chapterId } = useParams();
@@ -181,7 +186,7 @@ export function ReaderPage() {
   return (
     <div className={`reader reader-${readerSettings.theme} reader-${readerSettings.fontFamily} ${chromeVisible ? '' : 'chrome-hidden'}`} style={themeStyles} onContextMenu={(event) => event.preventDefault()}>
       <div className="brightness-layer" />
-      {forensicToken && <ForensicWatermarkOverlay token={forensicToken} />}
+      {forensicToken && <><ForensicWatermarkOverlay token={forensicToken} /><VisibleReaderWatermark token={forensicToken} /></>}
       <header className="reader-header">
         <Link to={`/novel/${novel.id}`} className="reader-icon-button" aria-label="작품으로 돌아가기"><ArrowLeft /></Link>
         <div><strong>{novel.title}</strong><span>{chapter.number}화. {chapter.title}</span></div>
