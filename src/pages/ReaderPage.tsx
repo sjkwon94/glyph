@@ -46,7 +46,14 @@ function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficie
 }
 
 function ForensicWatermarkOverlay({ token }: { token: string }) {
-  return <div className="forensic-watermark-layer" aria-hidden="true">{['18%', '42%', '66%', '88%'].map((top, index) => <span key={`${top}-${index}`} style={{ top }}><WatermarkPattern token={token} size={132} /></span>)}</div>;
+  const placements = [
+    ['12%', '16%'], ['12%', '50%'], ['12%', '84%'],
+    ['32%', '16%'], ['32%', '50%'], ['32%', '84%'],
+    ['52%', '16%'], ['52%', '50%'], ['52%', '84%'],
+    ['72%', '16%'], ['72%', '50%'], ['72%', '84%'],
+    ['92%', '16%'], ['92%', '50%'], ['92%', '84%'],
+  ];
+  return <div className="forensic-watermark-layer" aria-hidden="true">{placements.map(([top, left], index) => <span key={`${top}-${left}-${index}`} style={{ top, left }}><WatermarkPattern token={token} size={116} /></span>)}</div>;
 }
 
 export function ReaderPage() {
