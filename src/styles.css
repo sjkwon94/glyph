@@ -543,6 +543,8 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .reaction-panel button.selected.negative { color: #857aa9; border-color: #d8d1ff; background: #f6f4ff; }
 .reaction-panel > a { background: #6c5ce7; }
 .reaction-panel > a:hover { background: #5646d6; }
+.chapter-row > span { color: #6c5ce7; }
+.chapter-row > span.unlocked { color: #5e4bc8; }
 .chapter-row:hover { background: #faf9ff; }
 
 .community-page .page-title, .studio-page .page-title, .wallet-page .page-title { margin-bottom: 32px; }
