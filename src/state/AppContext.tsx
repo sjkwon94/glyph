@@ -581,6 +581,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (evidenceInsertError) {
           console.error('[Glyph report] evidence record failed', { code: evidenceInsertError.code, message: evidenceInsertError.message, reportId: data.id });
           await supabase.storage.from('report-evidence').remove([storagePath]);
+          await supabase.from('content_reports').delete().eq('id', data.id).eq('reporter_id', viewer.id);
           return { ok: false, reason: '신고를 접수하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
         }
         if (detection.token) {
