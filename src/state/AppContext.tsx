@@ -211,12 +211,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const ids = (novelRows ?? []).map((row) => String(row.id));
       const [catalogResponses, accessible] = await Promise.all([
         Promise.all(ids.map((id) => client.rpc('get_chapter_catalog', { p_novel_id: id }))),
-        ids.length ? client.from('chapters').select('id,body').in('novel_id', ids) : Promise.resolve({ data: [], error: null }),
+        ids.length ? client.rpc('get_readable_chapter_content', { p_novel_ids: ids }) : Promise.resolve({ data: [], error: null }),
       ]);
       if (!active) return;
       const catalogError = catalogResponses.find((response) => response.error)?.error ?? accessible.error;
       if (catalogError) setSyncError(catalogError.message);
-      const accessibleBodies = new Map((accessible.data ?? []).map((row) => [String(row.id), String(row.body ?? '')]));
+      const accessibleRows = (accessible.data ?? []) as Array<{ id: unknown; body: unknown }>;
+      const accessibleBodies = new Map<string, string>(accessibleRows.map((row) => [String(row.id), String(row.body ?? '')]));
       const nextCatalog: Novel[] = (novelRows ?? []).map((row, index) => {
         const category = row.category as Exclude<CategoryId, 'all'>;
         const [color, accent] = catalogColors[category] ?? catalogColors.fantasy;
