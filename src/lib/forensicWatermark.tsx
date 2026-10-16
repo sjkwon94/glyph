@@ -144,7 +144,11 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
     }
     const markerScore = best?.markerScore ?? 0;
     const contrast = best?.contrast ?? 0;
-    if (!best || markerScore < .68 || contrast < .35) return { detected: false, confidence: Math.round(markerScore * 100) / 100, method: 'pixel-grid', note: '글리프 픽셀 패턴을 확인하지 못했습니다. 원본 이미지로 운영자 확인이 필요합니다.' };
+    // Keep the visual signal extremely faint, but allow a low-contrast candidate
+    // to proceed to the server token match. A browser screenshot/rescale can
+    // reduce a real 0.4% signal below the previous threshold; server matching
+    // remains the authoritative check and prevents a false user attribution.
+    if (!best || markerScore < .68 || contrast < .08) return { detected: false, confidence: 0, method: 'pixel-grid', note: '글리프 픽셀 패턴을 확인하지 못했습니다. 원본 이미지로 운영자 확인이 필요합니다.' };
 
     const active = best.values.map((value) => value < best!.threshold);
     const bits: boolean[] = [];
