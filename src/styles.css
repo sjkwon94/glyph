@@ -565,6 +565,34 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .reader { background: #f8f8f8; }
 .reader-header, .reader-footer { background: rgba(248,248,248,.94); }
 
+/* Community purple tone */
+.community-page .community-categories > strong { color: #776bb5; }
+.community-page .community-categories button { color: #3b3456; }
+.community-page .community-categories button > span { color: #8476c8; }
+.community-page .community-categories button small { color: #aaa2c9; }
+.community-page .community-categories button:hover { background: #f7f5ff; }
+.community-page .community-categories button.active { color: #4c3dc0; background: #eeeaff; box-shadow: inset 3px 0 0 #6c5ce7; }
+.community-page .feed-toolbar { border-bottom-color: #6c5ce7; }
+.community-page .feed-toolbar > div strong { color: #2d2547; }
+.community-page .post-label-line { color: #6c5ce7; }
+.community-page .post-label-line .pin-label { color: #5646d6; background: #f0edff; }
+.community-page .post-label-line small { color: #a29abf; }
+.community-page .post-author span { background: #6c5ce7; }
+.community-page .feed-card footer { border-top-color: #eeeaff; }
+.community-page .feed-card footer button.selected { color: #5646d6; background: #f0edff; }
+.community-page .feed-card footer button.selected.dislike { color: #857aa9; background: #f6f4ff; }
+.community-page .community-guide { background: linear-gradient(135deg, #6c5ce7 0%, #4c3cae 100%); }
+.community-page .community-guide > svg { color: #d9d4ff; }
+.community-page .community-guide p { color: #e5e1ff; }
+.community-page .community-guide a { border-bottom-color: rgba(255,255,255,.55); }
+.community-page .hot-tags { border-color: #e7e2ff; background: #fbfaff; }
+.community-page .hot-tags span { color: #5646d6; background: #f0edff; }
+.community-page .search-field:focus-within { border-color: #8d7dea; box-shadow: 0 0 0 3px rgba(108,92,231,.12); }
+.community-home-section { background: #faf9ff; }
+.community-home-list { border-top-color: #6c5ce7; }
+.community-home-list a { border-bottom-color: #ebe8f8; }
+.community-home-list a > span { color: #5646d6; }
+
 @media (max-width: 900px) {
   .home-novel-grid { grid-template-columns: repeat(4, 1fr); }
   .home-novel-grid .novel-card:last-child { display: none; }
