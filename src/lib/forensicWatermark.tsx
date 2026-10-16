@@ -114,7 +114,24 @@ export async function detectForensicWatermark(file: File): Promise<WatermarkDete
 
     // First check the known reader placements. A second coarse pass catches
     // cropped or reframed screenshots without making upload-time analysis heavy.
-    const sizes = [WATERMARK_SIZE * scale * .7, WATERMARK_SIZE * scale * .9, WATERMARK_SIZE * scale, WATERMARK_SIZE * scale * 1.2, WATERMARK_SIZE * scale * 1.5];
+    // Chat apps and screenshot tools often resize a capture before upload. In
+    // addition to the native size, derive candidates from the shortest image
+    // side so a 116px reader pattern reduced to 35–50px is still searchable.
+    const dimensionBase = Math.min(width, height) * .08;
+    const sizes = Array.from(new Set([
+      WATERMARK_SIZE * scale * .55,
+      WATERMARK_SIZE * scale * .7,
+      WATERMARK_SIZE * scale * .9,
+      WATERMARK_SIZE * scale,
+      WATERMARK_SIZE * scale * 1.2,
+      WATERMARK_SIZE * scale * 1.5,
+      dimensionBase * .65,
+      dimensionBase * .85,
+      dimensionBase,
+      dimensionBase * 1.2,
+      dimensionBase * 1.5,
+      dimensionBase * 1.9,
+    ].map((size) => Math.max(22, Math.round(size)))));
     const candidates: { x: number; y: number; size: number }[] = [];
     for (const size of sizes) for (const [top, left] of WATERMARK_PLACEMENTS) candidates.push({ x: width * left / 100 - size / 2, y: height * top / 100 - size / 2, size });
     const coarseStep = Math.max(24, Math.round(Math.min(width, height) / 18));
