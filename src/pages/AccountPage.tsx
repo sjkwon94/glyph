@@ -1,6 +1,5 @@
 import { Ban, FileText, LogOut, RotateCcw, ShieldCheck, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { runtimeLabel } from '../lib/supabase';
 import { useApp } from '../state/AppContext';
 import { useAuth } from '../state/AuthContext';
 
@@ -12,7 +11,7 @@ export function AccountPage() {
   if (!viewer) return <div className="page-container inner-page empty-state"><UserRound /><h1>로그인이 필요합니다</h1><p>계정에 로그인하면 소장 내역과 활동을 확인할 수 있습니다.</p><Link className="primary-button" to="/auth">로그인</Link></div>;
 
   return <div className="page-container inner-page account-page">
-    <header className="page-title"><span className="section-kicker"><ShieldCheck size={15} /> 내 계정</span><h1>{viewer.displayName}</h1><p>{viewer.email} · {runtimeLabel}</p></header>
+    <header className="page-title"><span className="section-kicker"><ShieldCheck size={15} /> 내 계정</span><h1>{viewer.displayName}</h1><p>{viewer.email}</p></header>
     {demoMode && <div className="config-notice">화면 검증용 데모 계정입니다. 실제 계정·결제·심사 데이터와 연결되어 있지 않습니다.</div>}
     <div className="account-grid">
       <section className="account-card"><h2>계정과 권한</h2><dl><div><dt>회원 유형</dt><dd>{viewer.isAdmin ? '운영자 미리보기' : '독자'}</dd></div><div><dt>로그인 보호</dt><dd>Supabase 세션 · 이메일/Google OAuth</dd></div></dl>{viewer.isAdmin && <Link className="secondary-button" to="/admin">운영자 센터</Link>}<button className="text-button danger" type="button" onClick={() => void signOut()}><LogOut size={16} /> 로그아웃</button></section>

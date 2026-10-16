@@ -18,5 +18,3 @@ export const supabase = hasSupabaseConfig
       },
     })
   : null;
-
-export const runtimeLabel = hasSupabaseConfig ? 'Supabase 연결됨' : '로컬 데모';
