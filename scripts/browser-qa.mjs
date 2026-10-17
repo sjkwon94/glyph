@@ -40,10 +40,13 @@ try {
   })));
   await mobile.reload({ waitUntil: 'networkidle' });
   await mobile.getByRole('heading', { name: '안녕하세요, 테스트작가 작가님' }).waitFor();
+  await mobile.screenshot({ path: path.join(output, 'studio-approved-mobile.png'), fullPage: false });
+  if (await mobile.getByRole('button', { name: '새 회차 쓰기' }).count()) throw new Error('studio exposes work-specific episode action');
+  await mobile.goto('http://127.0.0.1:5173/#/novel/ash-sword', { waitUntil: 'networkidle' });
+  await mobile.getByRole('heading', { name: '재가 된 검 관리' }).waitFor();
   await mobile.getByRole('button', { name: '새 회차 쓰기' }).click();
   await mobile.getByRole('heading', { name: /재가 된 검 · 새 회차/ }).waitFor();
   await mobile.keyboard.press('Escape');
-  await mobile.screenshot({ path: path.join(output, 'studio-approved-mobile.png'), fullPage: false });
 
   await mobile.goto('http://127.0.0.1:5173/#/wallet', { waitUntil: 'networkidle' });
   await mobile.getByText('쿠키 2배 이벤트', { exact: true }).waitFor();
