@@ -59,6 +59,7 @@ try {
   await mobile.getByRole('link', { name: /재가 된 검/ }).first().click();
   if (!mobile.url().includes('#/studio/work/')) throw new Error('studio work did not open management page');
   await mobile.getByRole('heading', { name: '재가 된 검' }).waitFor();
+  if (await mobile.getByText('작품 이미지 규격').count()) throw new Error('work management page still exposes upload-spec guide');
   if (!(await mobile.getByRole('button', { name: '새 회차 쓰기' }).count())) throw new Error('work management page is missing episode action');
   if (!(await mobile.getByRole('button', { name: '사진 업로드' }).count())) throw new Error('work management page is missing image action');
   await mobile.getByRole('button', { name: '새 회차 쓰기' }).click();
