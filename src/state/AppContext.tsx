@@ -466,6 +466,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, [catalogNovelIds, viewer]);
 
+  // 공개 작품 영역에는 승인된 필명을 사용하고, 계정/프로필에는 프로필 표시명을 유지한다.
+  // 소유 작품의 슬러그만 매칭하므로 다른 작가의 작품 표시에는 영향을 주지 않는다.
+  useEffect(() => {
+    const penName = state.authorApplication.status === 'approved' ? state.authorApplication.penName.trim() : '';
+    if (!penName || state.authorWorks.length === 0) return;
+    const ownedSlugs = new Set(state.authorWorks.map((work) => work.slug));
+    setCatalogNovels((previous) => {
+      let changed = false;
+      const next = previous.map((novel) => {
+        if (!ownedSlugs.has(novel.id) || novel.author === penName) return novel;
+        changed = true;
+        return { ...novel, author: penName };
+      });
+      return changed ? next : previous;
+    });
+  }, [state.authorApplication.penName, state.authorApplication.status, state.authorWorks]);
+
   const value = useMemo<AppContextValue>(() => ({
     ...state,
     catalogNovels,

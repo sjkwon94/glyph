@@ -56,6 +56,7 @@ try {
   await mobile.keyboard.press('Escape');
   await mobile.goto('http://127.0.0.1:5173/#/novel/ash-sword', { waitUntil: 'networkidle' });
   await mobile.getByRole('heading', { name: '회차 목록' }).waitFor();
+  await mobile.getByRole('link', { name: '테스트작가 작가' }).waitFor();
   if (await mobile.getByRole('heading', { name: '재가 된 검 관리' }).count()) throw new Error('public novel page exposes management heading');
   if (await mobile.getByRole('button', { name: '새 회차 쓰기' }).count()) throw new Error('public novel page exposes episode action');
   if (await mobile.getByRole('button', { name: '사진 업로드' }).count()) throw new Error('public novel page exposes image action');
