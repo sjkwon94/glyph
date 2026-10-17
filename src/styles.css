@@ -218,6 +218,57 @@ img { max-width: 100%; }
   .reader-header { padding: 0 8px; }.reader-header > div:last-child .reader-icon-button:nth-child(2) { display: none; }.reader-page-stage { padding: 76px 27px 66px; }.reader-content p { word-break: normal; }.tap-zone { width: 26%; }.tap-zone svg { display: none; }.chapter-heading { padding-top: 3vh; }.reader-settings-sheet { top: auto; right: 0; bottom: 0; width: 100%; max-height: 78dvh; border-radius: 16px 16px 0 0; }.reader-scroll-stage { padding-left: 25px; padding-right: 25px; }.reader-footer > button { width: 55px; font-size: 0; }.reader-footer > button svg { width: 19px; }.reader-progress > div { width: 65%; }
 }
 
+/* Author dashboard readability: keep the calm layout, but make supporting copy easy to scan. */
+.studio-page .studio-upload-guide > header { padding: 21px 24px; }
+.studio-page .studio-upload-guide > header h2 { font-size: 22px; }
+.studio-page .studio-upload-guide > header small { font-size: 13px; }
+.studio-page .studio-upload-guide > header .section-kicker { font-size: 14px; }
+.studio-page .studio-upload-specs > div { padding: 23px 24px; gap: 15px; }
+.studio-page .studio-upload-specs strong { font-size: 16px; }
+.studio-page .studio-upload-specs b { font-size: 20px; }
+.studio-page .studio-upload-specs p { font-size: 13px; line-height: 1.65; }
+.studio-page .studio-upload-note { padding: 14px 24px; font-size: 13px; }
+.studio-page .settlement-banner span, .studio-page .settlement-banner small { font-size: 14px; }
+.studio-page .settlement-banner strong { font-size: 30px; }
+.studio-page .settlement-banner > a { font-size: 15px; }
+.studio-page .studio-stats > div { padding: 23px; }
+.studio-page .studio-stats p { margin-top: 18px; font-size: 14px; }
+.studio-page .studio-stats strong { font-size: 30px; }
+.studio-page .studio-stats small { font-size: 12px; }
+.studio-page .studio-panel > header { padding: 23px 24px; }
+.studio-page .studio-panel h2 { font-size: 21px; }
+.studio-page .studio-panel p { font-size: 13px; }
+.studio-page .studio-work-list-item { min-height: 104px; padding: 16px 24px; }
+.studio-page .studio-work-list-link { grid-template-columns: 56px minmax(0, 1fr); gap: 15px; }
+.studio-page .studio-list-cover { width: 56px; height: 56px; }
+.studio-page .studio-work-list-link strong { font-size: 17px; }
+.studio-page .studio-work-list-link small, .studio-page .studio-work-list-link em { font-size: 12px; }
+.studio-page .schedule-card { padding: 25px; }
+.studio-page .schedule-card h3 { font-size: 14px; }
+.studio-page .schedule-card strong { font-size: 20px; }
+.studio-page .schedule-card p { font-size: 13px; line-height: 1.6; }
+.studio-page .writing-tip { padding: 25px; }
+.studio-page .writing-tip > span { font-size: 13px; }
+.studio-page .writing-tip h3 { font-size: 20px; }
+.studio-page .writing-tip p { font-size: 13px; }
+@media (max-width: 680px) {
+  .studio-page .studio-upload-guide > header, .studio-page .studio-upload-specs > div { padding-left: 18px; padding-right: 18px; }
+  .studio-page .studio-upload-guide > header h2 { font-size: 19px; }
+  .studio-page .studio-upload-specs strong { font-size: 15px; }
+  .studio-page .studio-upload-specs b { font-size: 18px; }
+  .studio-page .studio-upload-specs p, .studio-page .studio-upload-note { font-size: 12px; }
+  .studio-page .studio-stats > div { padding: 18px; }
+  .studio-page .studio-stats p { font-size: 13px; }
+  .studio-page .studio-stats strong { font-size: 26px; }
+  .studio-page .studio-stats small { font-size: 11px; }
+  .studio-page .studio-panel > header { padding: 19px 18px; }
+  .studio-page .studio-panel h2 { font-size: 19px; }
+  .studio-page .studio-panel p { font-size: 12px; }
+  .studio-page .studio-work-list-item { padding: 14px 18px; }
+  .studio-page .studio-work-list-link strong { font-size: 16px; }
+  .studio-page .studio-work-list-link small, .studio-page .studio-work-list-link em { font-size: 11px; }
+}
+
 .creator-work-tools { margin-top: 20px; border: 1px solid #e1ddf3; background: #fff; }
 .creator-work-tools > header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 18px; border-bottom: 1px solid #eeeaf8; }
 .creator-work-tools h2 { margin: 4px 0 0; font-size: 20px; }
