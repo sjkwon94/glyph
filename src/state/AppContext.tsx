@@ -42,6 +42,8 @@ export type AuthorWork = {
   category: Exclude<CategoryId, 'all'>;
   synopsis: string;
   status: 'draft' | 'serializing' | 'complete' | 'hidden';
+  coverPath?: string;
+  bannerPath?: string;
   coverUrl?: string;
   bannerUrl?: string;
 };
@@ -130,6 +132,7 @@ type AppContextValue = PersistedState & {
   grantAdReward: (amount: number) => boolean;
   mockPurchase: (amount: number) => boolean;
   createNovel: (title: string, category: Exclude<CategoryId, 'all'>, synopsis: string, coverFile?: File | null, bannerFile?: File | null) => Promise<ActionResult>;
+  updateNovelAssets: (novelId: string, coverFile?: File | null, bannerFile?: File | null) => Promise<ActionResult>;
   saveDraft: (novelId: string, title: string, body: string, publish: boolean, draftId?: string) => Promise<ActionResult>;
   submitAuthorApplication: (application: AuthorApplicationInput) => Promise<ActionResult>;
   reportContent: (report: Omit<ModerationReport, 'id' | 'status' | 'createdAt' | 'evidence'> & { evidence?: File | null }) => Promise<ActionResult>;
@@ -433,6 +436,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           category: row.category as Exclude<CategoryId, 'all'>,
           synopsis: String(row.synopsis ?? ''),
           status: row.status as AuthorWork['status'],
+          coverPath: typeof row.cover_path === 'string' ? row.cover_path : undefined,
+          bannerPath: typeof row.banner_path === 'string' ? row.banner_path : undefined,
           coverUrl: publicNovelAssetUrl(row.cover_path),
           bannerUrl: publicNovelAssetUrl(row.banner_path),
         })),
@@ -592,7 +597,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { ok: false, reason: '작품 이미지를 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
       }
       setCatalogNovelIds((previous) => ({ ...previous, [String(data.slug)]: String(data.id) }));
-      commit((previous) => ({ ...previous, authorWorks: [{ id: String(data.id), slug: String(data.slug), title: String(data.title), category: data.category as Exclude<CategoryId, 'all'>, synopsis: String(data.synopsis ?? ''), status: data.status as AuthorWork['status'], coverUrl: publicNovelAssetUrl(coverUpload.path), bannerUrl: publicNovelAssetUrl(bannerUpload.path) }, ...previous.authorWorks] }));
+      commit((previous) => ({ ...previous, authorWorks: [{ id: String(data.id), slug: String(data.slug), title: String(data.title), category: data.category as Exclude<CategoryId, 'all'>, synopsis: String(data.synopsis ?? ''), status: data.status as AuthorWork['status'], coverPath: coverUpload.path, bannerPath: bannerUpload.path, coverUrl: publicNovelAssetUrl(coverUpload.path), bannerUrl: publicNovelAssetUrl(bannerUpload.path) }, ...previous.authorWorks] }));
+      return { ok: true };
+    },
+    updateNovelAssets: async (novelId, coverFile, bannerFile) => {
+      if (!novelId) return { ok: false, reason: '작품을 선택해 주세요.' };
+      const coverError = await validateNovelAsset(coverFile, 'cover');
+      if (coverError) return { ok: false, reason: coverError };
+      const bannerError = await validateNovelAsset(bannerFile, 'banner');
+      if (bannerError) return { ok: false, reason: bannerError };
+      if (!coverFile && !bannerFile) return { ok: false, reason: '업로드할 사진을 선택해 주세요.' };
+      const current = state.authorWorks.find((work) => work.id === novelId);
+      if (!current) return { ok: false, reason: '작품을 찾을 수 없습니다.' };
+      if (isDemoMode) return { ok: true };
+      if (!supabase || !viewer) return { ok: false, reason: '로그인 후 사진을 업로드할 수 있습니다.' };
+      const client = supabase;
+      const { data: existing, error: existingError } = await client.from('novels').select('cover_path,banner_path').eq('id', novelId).eq('owner_id', viewer.id).single();
+      if (existingError) return { ok: false, reason: '작품 정보를 불러오지 못했습니다.' };
+      const uploadedPaths: string[] = [];
+      const uploadAsset = async (file: File | null | undefined, kind: 'cover' | 'banner') => {
+        if (!file) return { path: undefined as string | undefined, error: null as { message: string } | null };
+        const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
+        const path = `${viewer.id}/${novelId}/${kind}-${crypto.randomUUID()}.${extension}`;
+        const { error } = await client.storage.from(NOVEL_ASSET_BUCKET).upload(path, file, { upsert: false, contentType: file.type, cacheControl: '31536000' });
+        if (error) return { path: undefined, error };
+        uploadedPaths.push(path);
+        return { path, error: null };
+      };
+      const coverUpload = await uploadAsset(coverFile, 'cover');
+      const bannerUpload = coverUpload.error ? { path: undefined, error: coverUpload.error } : await uploadAsset(bannerFile, 'banner');
+      if (coverUpload.error || bannerUpload.error) {
+        if (uploadedPaths.length) await client.storage.from(NOVEL_ASSET_BUCKET).remove(uploadedPaths);
+        console.error('[glyph] novel asset replacement failed', coverUpload.error ?? bannerUpload.error);
+        return { ok: false, reason: '작품 사진을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+      }
+      const nextCoverPath = coverUpload.path ?? (typeof existing.cover_path === 'string' ? existing.cover_path : null);
+      const nextBannerPath = bannerUpload.path ?? (typeof existing.banner_path === 'string' ? existing.banner_path : null);
+      const { error: updateError } = await client.from('novels').update({ cover_path: nextCoverPath, banner_path: nextBannerPath, updated_at: new Date().toISOString() }).eq('id', novelId).eq('owner_id', viewer.id);
+      if (updateError) {
+        if (uploadedPaths.length) await client.storage.from(NOVEL_ASSET_BUCKET).remove(uploadedPaths);
+        console.error('[glyph] novel asset replacement metadata failed', updateError);
+        return { ok: false, reason: '작품 사진을 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+      }
+      const oldPaths = [coverFile && existing.cover_path, bannerFile && existing.banner_path].filter((path): path is string => typeof path === 'string' && path.length > 0 && !uploadedPaths.includes(path));
+      if (oldPaths.length) await client.storage.from(NOVEL_ASSET_BUCKET).remove(oldPaths);
+      commit((previous) => ({ ...previous, authorWorks: previous.authorWorks.map((work) => work.id === novelId ? { ...work, coverPath: nextCoverPath ?? undefined, bannerPath: nextBannerPath ?? undefined, coverUrl: publicNovelAssetUrl(nextCoverPath), bannerUrl: publicNovelAssetUrl(nextBannerPath) } : work) }));
       return { ok: true };
     },
     saveDraft: async (novelId, title, body, publish, draftId) => {

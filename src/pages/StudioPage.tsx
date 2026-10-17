@@ -1,4 +1,4 @@
-import { BadgeCheck, BarChart3, BookOpen, CalendarClock, ChevronRight, Clock3, Eye, FileCheck2, FileText, FileUp, Image as ImageIcon, Link2, LockKeyhole, MessageCircle, PenLine, Plus, Save, Send, ShieldCheck, Sparkles, Square, Users } from 'lucide-react';
+import { BadgeCheck, BarChart3, BookOpen, CalendarClock, ChevronRight, Clock3, Eye, FileCheck2, FileText, FileUp, Image as ImageIcon, ImagePlus, Link2, LockKeyhole, MessageCircle, PenLine, Plus, Save, Send, ShieldCheck, Sparkles, Square } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal } from '../components/Modal';
@@ -7,10 +7,11 @@ import { useApp } from '../state/AppContext';
 import { useAuth } from '../state/AuthContext';
 
 export function StudioPage() {
-  const { authorApplication, authorWorks, createNovel, drafts, saveDraft, submitAuthorApplication } = useApp();
+  const { authorApplication, authorWorks, createNovel, drafts, saveDraft, submitAuthorApplication, updateNovelAssets } = useApp();
   const { viewer, demoMode } = useAuth();
   const [editorOpen, setEditorOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(false);
+  const [assetOpen, setAssetOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
   const [activeWorkId, setActiveWorkId] = useState('');
   const [editingDraftId, setEditingDraftId] = useState<string>();
@@ -21,6 +22,9 @@ export function StudioPage() {
   const [workSynopsis, setWorkSynopsis] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [assetWorkId, setAssetWorkId] = useState('');
+  const [assetCoverFile, setAssetCoverFile] = useState<File | null>(null);
+  const [assetBannerFile, setAssetBannerFile] = useState<File | null>(null);
   const [penName, setPenName] = useState(authorApplication.penName);
   const [genre, setGenre] = useState(authorApplication.genre || 'fantasy');
   const [introduction, setIntroduction] = useState(authorApplication.introduction);
@@ -32,6 +36,7 @@ export function StudioPage() {
   const [submitting, setSubmitting] = useState(false);
   const activeWork = authorWorks.find((work) => work.id === activeWorkId) ?? authorWorks[0];
   const activeDrafts = activeWork ? drafts.filter((draft) => draft.novelId === activeWork.id) : [];
+  const assetWork = authorWorks.find((work) => work.id === assetWorkId);
   const hasWorkSample = Boolean(portfolioUrl.trim() || sampleFile || (demoMode && sampleName) || sampleExcerpt.trim().length >= 200);
   const applicationReady = penName.trim().length >= 2 && introduction.trim().length >= 50 && hasWorkSample;
   const uploadGuide = <section className="studio-upload-guide" aria-label="이미지 업로드 규격"><header><div><span className="section-kicker"><ImageIcon size={14} /> 이미지 업로드 규격</span><h2>추천 배너와 작품 썸네일</h2></div><small>작가 페이지에서 확인하세요</small></header><div className="studio-upload-specs"><div><span className="studio-spec-icon"><ImageIcon /></span><div><strong>오늘의 추천 배너</strong><b>1440 × 480px</b><p>JPG · PNG · WebP · 최대 5MB<br />문구는 왼쪽 안전 영역 45% 안에 배치</p></div></div><div><span className="studio-spec-icon"><Square /></span><div><strong>작품 썸네일</strong><b>800 × 800px</b><p>정방형 JPG · PNG · WebP · 최대 3MB<br />중요한 얼굴·제목은 중앙 80% 안에 배치</p></div></div></div><p className="studio-upload-note">모바일에서도 잘리지 않도록 배너는 핵심 내용을 중앙에 두고, 썸네일은 정방형으로 준비해 주세요.</p></section>;
@@ -64,6 +69,24 @@ export function StudioPage() {
     setSubmitting(false);
     if (!result.ok) { setMessage(result.reason ?? '작품을 등록하지 못했습니다.'); return; }
     setWorkTitle(''); setWorkSynopsis(''); setCoverFile(null); setBannerFile(null); setWorkOpen(false);
+  };
+
+  const openAssetEditor = (workId: string) => {
+    setAssetWorkId(workId);
+    setAssetCoverFile(null);
+    setAssetBannerFile(null);
+    setMessage('');
+    setAssetOpen(true);
+  };
+
+  const submitAssets = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setMessage('');
+    const result = await updateNovelAssets(assetWorkId, assetCoverFile, assetBannerFile);
+    setSubmitting(false);
+    if (!result.ok) { setMessage(result.reason ?? '작품 사진을 저장하지 못했습니다.'); return; }
+    setAssetOpen(false);
   };
 
   const submitApplication = async (event: FormEvent<HTMLFormElement>) => {
@@ -120,13 +143,14 @@ export function StudioPage() {
   return (
     <div className="studio-page">
       <div className="page-container inner-page">
-        <header className="page-title split-title"><div><span className="section-kicker"><BadgeCheck size={15} /> 승인 작가</span><h1>안녕하세요, {authorApplication.penName} 작가님</h1><p>작품을 등록하고 초안을 안전하게 저장한 뒤 원하는 시점에 발행하세요.</p></div><button className="primary-button" type="button" onClick={() => activeWork ? openNewEpisode() : setWorkOpen(true)}>{activeWork ? <><PenLine size={18} /> 새 회차 쓰기</> : <><Plus size={18} /> 첫 작품 등록</>}</button></header>
-        <section className="settlement-banner"><div><span>이번 달 예상 정산액</span><strong>{demoMode ? '₩1,284,600' : '₩0'}</strong><small>{demoMode ? '데모 데이터' : '정산 확정 전'} · 매월 정산서에서 거래별 공제 내역 제공</small></div><Link to="/creator-policy">정산 기준 확인 <ChevronRight size={16} /></Link></section>
+        <header className="page-title split-title"><div><span className="section-kicker"><BadgeCheck size={15} /> 작가 페이지</span><h1>안녕하세요, {authorApplication.penName} 작가님</h1><p>작품을 관리하고 새 회차를 작성하세요. 사진과 소개도 작품별로 바로 수정할 수 있습니다.</p></div><div className="studio-header-actions"><button className="secondary-button" type="button" onClick={() => setWorkOpen(true)}><Plus size={17} /> 새 작품 쓰기</button>{activeWork && <button className="primary-button" type="button" onClick={openNewEpisode}><PenLine size={18} /> 새 회차 쓰기</button>}</div></header>
+        <section className="settlement-banner"><div><span>총 정산액</span><strong>{demoMode ? '₩1,284,600' : '₩0'}</strong><small>{demoMode ? '누적 정산 데모 데이터' : '정산 데이터 집계 전'} · 거래별 공제 내역은 정산서에서 확인</small></div><Link to="/creator-policy">정산 기준 확인 <ChevronRight size={16} /></Link></section>
         {uploadGuide}
-        <div className="studio-stats"><div><span><Eye /></span><p>이번 주 조회</p><strong>{demoMode ? '18,420' : '0'}</strong><small>{demoMode ? '지난주보다 12% ↑' : '집계 전'}</small></div><div><span><Users /></span><p>선호 독자</p><strong>{demoMode ? '8,421' : '0'}</strong><small>{demoMode ? '오늘 38명 추가' : '집계 전'}</small></div><div><span><MessageCircle /></span><p>새 댓글</p><strong>{demoMode ? '126' : '0'}</strong><small>{demoMode ? '답변 대기 14개' : '새 댓글 없음'}</small></div><div><span><BarChart3 /></span><p>평균 완독률</p><strong>{demoMode ? '82.4%' : '-'}</strong><small>{demoMode ? '상위 10%' : '데이터 없음'}</small></div></div>
+        <div className="studio-stats"><div><span><Eye /></span><p>총 조회수</p><strong>{demoMode ? '18,420' : '0'}</strong><small>{demoMode ? '지난주보다 12% ↑' : '집계 전'}</small></div><div><span><BookOpen /></span><p>작품 수</p><strong>{authorWorks.length}</strong><small>{authorWorks.length ? '등록된 작품' : '첫 작품을 등록해 주세요'}</small></div><div><span><MessageCircle /></span><p>새 댓글</p><strong>{demoMode ? '126' : '0'}</strong><small>{demoMode ? '답변 대기 14개' : '새 댓글 없음'}</small></div><div><span><BarChart3 /></span><p>평균 완독률</p><strong>{demoMode ? '82.4%' : '-'}</strong><small>{demoMode ? '상위 10%' : '데이터 집계 전'}</small></div></div>
         <div className="studio-layout">
           <section className="studio-main">
-            {activeWork ? <div className="studio-work-card"><div className="studio-cover"><BookOpen /></div><div><span>{activeWork.status === 'serializing' ? '연재중' : '준비중'} · {getCategoryLabel(activeWork.category)}</span><h2>{activeWork.title}</h2><p>총 {activeDrafts.length}화</p>{authorWorks.length > 1 && <select aria-label="관리할 작품" value={activeWork.id} onChange={(event) => setActiveWorkId(event.target.value)}>{authorWorks.map((work) => <option key={work.id} value={work.id}>{work.title}</option>)}</select>}<div className="mini-progress"><span style={{ width: activeDrafts.length ? '38%' : '0%' }} /></div><small>{activeWork.synopsis || '작품 소개가 아직 없습니다.'}</small></div><button type="button" onClick={() => setWorkOpen(true)}>새 작품 <Plus /></button></div> : <div className="studio-work-empty"><BookOpen /><div><h2>첫 작품을 등록해 주세요</h2><p>작품 정보는 초안 상태로 저장되며, 첫 회차를 발행하면 독자에게 공개됩니다.</p></div><button className="primary-button" type="button" onClick={() => setWorkOpen(true)}><Plus size={16} /> 작품 등록</button></div>}
+            <section className="studio-panel studio-works-panel"><header><div><h2>내 작품</h2><p>작품을 선택하면 작품 페이지로 이동합니다. 사진 업로드와 새 회차 작성도 작품별로 관리하세요.</p></div><button className="secondary-button small" type="button" onClick={() => setWorkOpen(true)}><Plus size={16} /> 작품 추가</button></header><div className="studio-work-list">{authorWorks.length ? authorWorks.map((work) => <article className={work.id === activeWork?.id ? 'studio-work-list-item active' : 'studio-work-list-item'} key={work.id}><Link to={`/novel/${work.slug}`} className="studio-work-list-link" onClick={() => setActiveWorkId(work.id)}><span className="studio-list-cover">{work.coverUrl ? <img src={work.coverUrl} alt="" /> : <BookOpen />}</span><span><strong>{work.title}</strong><small>{work.status === 'serializing' ? '연재중' : work.status === 'complete' ? '완결' : '초안'} · {getCategoryLabel(work.category)}</small><em>{work.synopsis || '작품 소개가 아직 없습니다.'}</em></span></Link><div className="studio-work-list-actions"><button type="button" className="secondary-button small" onClick={() => { setActiveWorkId(work.id); openNewEpisode(); }}><PenLine size={14} /> 새 회차</button><button type="button" className="secondary-button small" onClick={() => openAssetEditor(work.id)}><ImagePlus size={14} /> 사진 업로드</button></div></article>) : <div className="studio-list-empty">아직 등록한 작품이 없습니다. 오른쪽 위 ‘새 작품 쓰기’부터 시작해 보세요.</div>}</div></section>
+            {activeWork ? <div className="studio-work-card"><div className="studio-cover">{activeWork.coverUrl ? <img src={activeWork.coverUrl} alt="" /> : <BookOpen />}</div><div><span>{activeWork.status === 'serializing' ? '연재중' : '준비중'} · {getCategoryLabel(activeWork.category)}</span><h2>{activeWork.title}</h2><p>총 {activeDrafts.length}화</p>{authorWorks.length > 1 && <select aria-label="관리할 작품" value={activeWork.id} onChange={(event) => setActiveWorkId(event.target.value)}>{authorWorks.map((work) => <option key={work.id} value={work.id}>{work.title}</option>)}</select>}<div className="mini-progress"><span style={{ width: activeDrafts.length ? '38%' : '0%' }} /></div><small>{activeWork.synopsis || '작품 소개가 아직 없습니다.'}</small></div><div className="studio-work-card-actions"><Link to={`/novel/${activeWork.slug}`} className="studio-work-card-link">작품 페이지 <ChevronRight size={15} /></Link><button type="button" onClick={() => openAssetEditor(activeWork.id)}><ImagePlus size={14} /> 사진 업로드</button></div></div> : <div className="studio-work-empty"><BookOpen /><div><h2>첫 작품을 등록해 주세요</h2><p>작품 정보는 초안 상태로 저장되며, 첫 회차를 발행하면 독자에게 공개됩니다.</p></div><button className="primary-button" type="button" onClick={() => setWorkOpen(true)}><Plus size={16} /> 작품 등록</button></div>}
             <div className="studio-panel"><header><div><h2>회차 관리</h2><p>초안을 이어 쓰거나 발행한 회차를 확인하세요.</p></div><button className="secondary-button small" type="button" onClick={() => activeWork ? openNewEpisode() : setWorkOpen(true)}><Plus size={16} /> 새 회차</button></header><div className="draft-list">{activeDrafts.length ? activeDrafts.map((draft) => <button type="button" key={draft.id} onClick={() => { setEditingDraftId(draft.id); setTitle(draft.title); setBody(draft.body); setMessage(''); setEditorOpen(true); }}><span className={draft.status === '발행' ? 'published' : ''}><FileText /></span><div><strong>{draft.chapterNumber}화 · {draft.title}</strong><small>{draft.status} · {draft.updatedAt}{draft.status !== '발행' && draft.body && ` · ${draft.body.length.toLocaleString()}자`}</small></div><ChevronRight /></button>) : <div className="studio-list-empty">아직 저장한 회차가 없습니다.</div>}</div></div>
           </section>
           <aside className="studio-side"><div className="schedule-card"><CalendarClock /><h3>연재 일정</h3><strong>회차별 직접 발행</strong><p>초안은 비공개로 저장되고, 발행한 회차만 공개됩니다.</p></div><div className="writing-tip"><span>오늘의 집필 팁</span><h3>장면의 끝에는<br />작은 질문을 남겨보세요.</h3><p>독자가 다음 회차를 누르게 만드는 가장 자연스러운 힘은 ‘궁금함’입니다.</p></div></aside>
@@ -134,6 +158,7 @@ export function StudioPage() {
       </div>
 
       {workOpen && <Modal title="새 작품 등록" onClose={() => setWorkOpen(false)} wide><form className="author-application-form" onSubmit={submitWork}><div className="application-form-grid"><label>작품 제목<input value={workTitle} onChange={(event) => setWorkTitle(event.target.value)} minLength={1} maxLength={100} placeholder="작품 제목" required /></label><label>장르<select value={workCategory} onChange={(event) => setWorkCategory(event.target.value as typeof workCategory)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작품 소개 <small>{workSynopsis.length.toLocaleString()}/3,000</small><textarea value={workSynopsis} onChange={(event) => setWorkSynopsis(event.target.value)} maxLength={3000} placeholder="독자에게 보여줄 작품 소개를 작성해 주세요." /></label><fieldset className="work-image-fields"><legend>작품 이미지 <small>선택 입력</small></legend><label className="file-field"><ImageIcon /><span><strong>{coverFile?.name || '작품 썸네일 선택'}</strong><small>800 × 800px · JPG, PNG, WebP · 최대 3MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} /></label><label className="file-field"><ImageIcon /><span><strong>{bannerFile?.name || '오늘의 추천 배너 선택'}</strong><small>1440 × 480px · JPG, PNG, WebP · 최대 5MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setBannerFile(event.target.files?.[0] ?? null)} /></label></fieldset><div className="editor-notice">작품은 먼저 비공개 초안으로 만들어집니다. 이미지는 규격을 확인한 뒤 승인된 작가의 전용 저장소에 안전하게 업로드됩니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={() => setWorkOpen(false)}>취소</button><button className="primary-button" disabled={!workTitle.trim() || submitting}><Plus size={17} /> {submitting ? '등록 중…' : '작품 등록'}</button></div></form></Modal>}
+      {assetOpen && assetWork && <Modal title={`${assetWork.title} · 사진 업로드`} onClose={() => setAssetOpen(false)} wide><form className="author-application-form" onSubmit={submitAssets}><p className="asset-upload-intro">작품 페이지와 홈 추천 영역에 사용할 이미지를 교체합니다. 한 장만 선택해도 기존 이미지는 유지됩니다.</p><fieldset className="work-image-fields"><legend>업로드할 사진</legend><label className="file-field"><ImageIcon /><span><strong>{assetCoverFile?.name || '작품 썸네일 선택'}</strong><small>800 × 800px · JPG, PNG, WebP · 최대 3MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setAssetCoverFile(event.target.files?.[0] ?? null)} /></label><label className="file-field"><ImageIcon /><span><strong>{assetBannerFile?.name || '오늘의 추천 배너 선택'}</strong><small>1440 × 480px · JPG, PNG, WebP · 최대 5MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setAssetBannerFile(event.target.files?.[0] ?? null)} /></label></fieldset>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={() => setAssetOpen(false)}>취소</button><button className="primary-button" disabled={submitting || (!assetCoverFile && !assetBannerFile)}><ImagePlus size={17} /> {submitting ? '업로드 중…' : '사진 저장'}</button></div></form></Modal>}
       {editorOpen && activeWork && <Modal title={`${activeWork.title} · ${editingDraftId ? '회차 수정' : '새 회차'}`} onClose={() => setEditorOpen(false)} wide><form className="episode-editor" onSubmit={submitEpisode}><div className="editor-meta"><label>회차 제목<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="예: 북쪽으로 가는 길" /></label><span>{body.length.toLocaleString()}자</span></div><label><span className="sr-only">본문</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={200000} placeholder="이야기를 시작하세요…" autoFocus /></label><div className="editor-notice">입력한 텍스트는 HTML로 실행되지 않으며, 운영 환경에서는 서버에서 한 번 더 검증합니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="submit" value="draft" disabled={submitting}><Save size={17} /> 초안 저장</button><button className="primary-button" type="submit" value="publish" disabled={submitting || !title.trim() || body.trim().length < 10}><BookOpen size={17} /> 바로 발행</button></div></form></Modal>}
     </div>
   );
