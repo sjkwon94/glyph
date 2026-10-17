@@ -321,6 +321,60 @@ img { max-width: 100%; }
   .community-page .feed-card footer { min-height: 31px; }
 }
 
+/* Author discovery and public profile */
+.author-search-results { margin: 24px 0 30px; }
+.author-search-results .results-line { margin-bottom: 10px; }
+.author-search-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.author-search-item { min-height: 66px; padding: 12px 15px; display: flex; align-items: center; gap: 11px; border: 1px solid #e4e0ee; border-radius: 5px; background: #fff; transition: border-color .18s, background .18s; }
+.author-search-item:hover { border-color: #bcb1f0; background: #faf9ff; }
+.author-search-item > span:nth-child(2) { min-width: 0; flex: 1; }
+.author-search-item strong, .author-search-item small { display: block; }
+.author-search-item strong { color: #29234b; font-size: 14px; }
+.author-search-item small { margin-top: 4px; color: #817b92; font-size: 10px; }
+.author-search-item > svg { color: #8b7bd3; flex: none; }
+.author-search-avatar { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; color: #fff; background: #6c5ce7; font-size: 14px; font-weight: 700; }
+.back-link { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 22px; color: #6c5ce7; font-size: 12px; font-weight: 700; }
+.back-link:hover { color: #4f40bd; }
+.author-profile-page { padding-bottom: 80px; }
+.author-profile-hero { padding: 34px 38px; display: flex; align-items: center; gap: 22px; border: 1px solid #e3def8; background: linear-gradient(120deg, #f7f5ff, #fff); }
+.author-profile-avatar { width: 86px; height: 86px; display: grid; place-items: center; flex: none; border-radius: 50%; color: #fff; background: linear-gradient(145deg, #7564e8, #5140bb); font-size: 32px; font-weight: 800; box-shadow: 0 10px 25px rgba(83,67,190,.2); }
+.author-profile-heading h1 { margin: 8px 0 8px; font-size: 34px; letter-spacing: -.045em; }
+.author-profile-heading p { max-width: 670px; margin: 0; color: #6f6a7c; font-size: 14px; line-height: 1.75; }
+.author-profile-grid { margin-top: 24px; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 26px; align-items: start; }
+.author-profile-sidebar { display: grid; gap: 14px; }
+.author-info-card, .author-history-card { padding: 21px; border: 1px solid #e5e1ef; background: #fff; }
+.author-info-card h2, .author-history-card h2 { margin: 0 0 16px; font-size: 15px; }
+.author-info-card dl { margin: 0; display: grid; gap: 14px; }
+.author-info-card dl > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.author-info-card dt { display: inline-flex; align-items: center; gap: 6px; color: #89839a; font-size: 11px; }
+.author-info-card dt svg { color: #6c5ce7; }
+.author-info-card dd { margin: 0; color: #312b4f; font-size: 11px; font-weight: 700; text-align: right; }
+.author-history-card ul { margin: 0; padding-left: 17px; color: #6f6a7c; font-size: 11px; line-height: 1.8; }
+.author-works-section { min-width: 0; padding: 23px; border: 1px solid #e5e1ef; background: #fff; }
+.author-works-section .content-section-heading { margin: 0 0 18px; }
+.author-works-section .content-section-heading h2 { font-size: 20px; }
+.author-works-section .content-section-heading > svg { color: #9a92b3; }
+.author-works-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.spotlight-author { width: fit-content; }
+.spotlight-author:hover { color: #5646d6; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 680px) {
+  .author-search-list { grid-template-columns: 1fr; }
+  .author-profile-page { padding-bottom: 90px; }
+  .author-profile-hero { padding: 24px 20px; gap: 15px; }
+  .author-profile-avatar { width: 62px; height: 62px; font-size: 24px; }
+  .author-profile-heading h1 { font-size: 27px; }
+  .author-profile-heading p { font-size: 12px; }
+  .author-profile-grid { display: block; }
+  .author-profile-sidebar { margin-bottom: 15px; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .author-info-card, .author-history-card { padding: 16px; }
+  .author-info-card h2, .author-history-card h2 { font-size: 13px; }
+  .author-info-card dl { gap: 10px; }
+  .author-info-card dt, .author-info-card dd, .author-history-card ul { font-size: 10px; }
+  .author-works-section { padding: 16px; }
+  .author-works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+
 .creator-upload-guide { margin: 18px 24px; border: 1px solid #e1ddf3; background: #fff; }
 .creator-upload-guide > header { padding: 17px 20px; display: flex; align-items: center; border-bottom: 1px solid #eeeaf8; }
 .creator-upload-guide > header .section-kicker { display: inline-flex; align-items: center; gap: 5px; margin: 0; }

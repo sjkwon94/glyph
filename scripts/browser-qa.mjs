@@ -40,6 +40,12 @@ try {
   const filteredTitles = await mobile.locator('.novel-card h3').allTextContents();
   if (filteredTitles.length !== 1 || filteredTitles[0] !== '재가 된 검') throw new Error(`combined filters failed: ${filteredTitles.join(', ')}`);
 
+  await mobile.goto('http://127.0.0.1:5173/#/discover', { waitUntil: 'networkidle' });
+  await mobile.getByLabel('작가 또는 작품 검색').fill('해무');
+  await mobile.getByRole('link', { name: /해무.*작가 프로필 보기/ }).click();
+  await mobile.getByRole('heading', { name: '해무', exact: true }).waitFor();
+  await mobile.getByRole('heading', { name: '해무 작가의 작품' }).waitFor();
+
   await mobile.goto('http://127.0.0.1:5173/#/studio', { waitUntil: 'networkidle' });
   await mobile.getByRole('heading', { name: '승인된 작가만 연재할 수 있어요' }).waitFor();
   await mobile.screenshot({ path: path.join(output, 'studio-application-mobile.png'), fullPage: false });
@@ -56,7 +62,10 @@ try {
   await mobile.keyboard.press('Escape');
   await mobile.goto('http://127.0.0.1:5173/#/novel/ash-sword', { waitUntil: 'networkidle' });
   await mobile.getByRole('heading', { name: '회차 목록' }).waitFor();
-  await mobile.getByRole('link', { name: '테스트작가 작가' }).waitFor();
+  await mobile.getByRole('link', { name: '테스트작가 작가 프로필' }).click();
+  await mobile.getByRole('heading', { name: '테스트작가', exact: true }).waitFor();
+  await mobile.goto('http://127.0.0.1:5173/#/novel/ash-sword', { waitUntil: 'networkidle' });
+  await mobile.getByRole('heading', { name: '회차 목록' }).waitFor();
   if (await mobile.getByRole('heading', { name: '재가 된 검 관리' }).count()) throw new Error('public novel page exposes management heading');
   if (await mobile.getByRole('button', { name: '새 회차 쓰기' }).count()) throw new Error('public novel page exposes episode action');
   if (await mobile.getByRole('button', { name: '사진 업로드' }).count()) throw new Error('public novel page exposes image action');

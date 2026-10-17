@@ -6,7 +6,7 @@ import { useAuth } from '../state/AuthContext';
 
 const navigation = [
   { to: '/', label: '홈', icon: House, end: true },
-  { to: '/discover', label: '작품 찾기', icon: Compass },
+  { to: '/discover', label: '찾기', icon: Compass },
   { to: '/community/martial', label: '커뮤니티', icon: Users },
   { to: '/studio', label: '연재 스튜디오', icon: PenLine },
 ];
@@ -33,7 +33,7 @@ export function AppShell({ children, readerMode }: { children: ReactNode; reader
           </Link>
           <nav className="desktop-nav" aria-label="주 메뉴">
             {navigation.map(({ to, label, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => navClass(to, isActive)}>{label}</NavLink>
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => navClass(to, isActive)}>{label}</NavLink>
             ))}
           </nav>
           <div className="header-actions">
@@ -69,7 +69,7 @@ export function AppShell({ children, readerMode }: { children: ReactNode; reader
       </footer>
       <nav className="bottom-nav" aria-label="하단 메뉴">
         {navigation.slice(0, 4).map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={({ isActive }) => navClass(to, isActive)}><Icon size={20} /><span>{label === '작품 찾기' ? '찾기' : label === '연재 스튜디오' ? '연재' : label}</span></NavLink>
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => navClass(to, isActive)}><Icon size={20} /><span>{label === '연재 스튜디오' ? '연재' : label}</span></NavLink>
         ))}
       </nav>
     </div>

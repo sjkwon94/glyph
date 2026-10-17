@@ -22,7 +22,7 @@ export function HomePage() {
             <span className="spotlight-label">오늘의 추천</span>
             <h1>{featured.title}</h1>
             <p className="spotlight-tagline">{featured.tagline}</p>
-            <span className="spotlight-author">작가 {featured.author}</span>
+            <Link className="spotlight-author" to={`/author/${encodeURIComponent(featured.author)}`}>작가 {featured.author}</Link>
             {featured.description.trim() !== featured.tagline.trim() && <p className="spotlight-description">{featured.description}</p>}
             <div className="spotlight-meta">
               <span>{featured.categoryLabel}</span>

@@ -44,7 +44,7 @@ export function NovelPage() {
           <BookCover novel={novel} className="detail-cover" />
           <div className="novel-info">
             <div className="badge-line">{novel.badge && <span>{novel.badge}</span>}<span>{novel.categoryLabel}</span><span>{novel.status}</span></div>
-            <h1>{novel.title}</h1><p className="novel-tagline">{novel.tagline}</p><Link to="#author" className="author-link">{novel.author} 작가 <ChevronRight size={15} /></Link>
+            <h1>{novel.title}</h1><p className="novel-tagline">{novel.tagline}</p><Link to={`/author/${encodeURIComponent(novel.author)}`} className="author-link" aria-label={`${novel.author} 작가 프로필`}>{novel.author} 작가 <ChevronRight size={15} /></Link>
             <div className="novel-metrics"><span><Star size={17} fill="currentColor" /><strong>{novel.rating}</strong> 평점</span><span><strong>{novel.readers}</strong> 독자</span><span><strong>{novel.chapters.length}</strong>화</span></div>
             <p className="novel-description">{novel.description}</p>
             <div className="tag-row">{novel.tags.map((tag) => <span key={tag}>#{tag}</span>)}</div>

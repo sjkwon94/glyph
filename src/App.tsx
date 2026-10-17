@@ -4,6 +4,7 @@ import { AppShell } from './components/AppShell';
 
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage').then((module) => ({ default: module.DiscoverPage })));
+const AuthorProfilePage = lazy(() => import('./pages/AuthorProfilePage').then((module) => ({ default: module.AuthorProfilePage })));
 const NovelPage = lazy(() => import('./pages/NovelPage').then((module) => ({ default: module.NovelPage })));
 const ReaderPage = lazy(() => import('./pages/ReaderPage').then((module) => ({ default: module.ReaderPage })));
 const CommunityPage = lazy(() => import('./pages/CommunityPage').then((module) => ({ default: module.CommunityPage })));
@@ -24,6 +25,7 @@ export default function App() {
       <Suspense fallback={<div className="page-loader" role="status">페이지를 불러오는 중…</div>}><Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/discover" element={<DiscoverPage />} />
+        <Route path="/author/:authorName" element={<AuthorProfilePage />} />
         <Route path="/novel/:novelId" element={<NovelPage />} />
         <Route path="/read/:novelId/:chapterId" element={<ReaderPage />} />
         <Route path="/community" element={<Navigate to="/community/martial" replace />} />
