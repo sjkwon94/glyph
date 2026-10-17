@@ -23,7 +23,7 @@ export function HomePage() {
             <h1>{featured.title}</h1>
             <p className="spotlight-tagline">{featured.tagline}</p>
             <span className="spotlight-author">작가 {featured.author}</span>
-            <p className="spotlight-description">{featured.description}</p>
+            {featured.description.trim() !== featured.tagline.trim() && <p className="spotlight-description">{featured.description}</p>}
             <div className="spotlight-meta">
               <span>{featured.categoryLabel}</span>
               <span><Star size={14} fill="currentColor" /> {featured.rating}</span>
