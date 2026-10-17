@@ -635,6 +635,22 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .studio-page .writing-tip { border-color: #e7e2ff; background: #f7f5ff; }
 .studio-page .writing-tip > span { color: #6c5ce7; }
 .studio-page .writing-tip p { color: #756d96; }
+.studio-upload-guide { margin: 20px 0; border: 1px solid #e1ddf3; background: white; }
+.studio-upload-guide > header { padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eeeaf8; }
+.studio-upload-guide > header > div { display: flex; align-items: center; gap: 12px; }
+.studio-upload-guide > header .section-kicker { display: inline-flex; align-items: center; gap: 5px; margin: 0; }
+.studio-upload-guide > header h2 { margin: 4px 0 0; font-size: 17px; }
+.studio-upload-guide > header small { color: #8a82aa; font-size: 10px; }
+.studio-upload-specs { display: grid; grid-template-columns: 1fr 1fr; }
+.studio-upload-specs > div { padding: 19px 20px; display: flex; gap: 12px; border-right: 1px solid #eeeaf8; }
+.studio-upload-specs > div:last-child { border-right: 0; }
+.studio-spec-icon { width: 36px; height: 36px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 7px; color: var(--accent); background: #f0edff; }
+.studio-spec-icon svg { width: 18px; }
+.studio-upload-specs strong, .studio-upload-specs b, .studio-upload-specs p { display: block; }
+.studio-upload-specs strong { font-size: 13px; }
+.studio-upload-specs b { margin-top: 4px; color: var(--accent-dark); font-size: 15px; }
+.studio-upload-specs p { margin: 6px 0 0; color: #777; font-size: 10px; line-height: 1.7; }
+.studio-upload-note { margin: 0; padding: 11px 20px; border-top: 1px solid #eeeaf8; color: #8a82aa; font-size: 10px; line-height: 1.6; }
 
 .creator-approval-hero { min-height: 370px; padding: 45px 50px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; position: relative; color: white; background: #211d35; }
 .creator-approval-hero > div { position: relative; z-index: 2; }
@@ -810,6 +826,10 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   .application-form-grid { grid-template-columns: 1fr; gap: 0; }
   .double-event-banner { padding: 16px; grid-template-columns: 1fr auto; gap: 9px; }
   .double-event-banner > span { width: fit-content; }.double-event-banner > div { grid-column: 1 / -1; grid-row: 2; }.double-event-banner > b { grid-column: 2; grid-row: 1; }
+  .studio-upload-guide > header { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .studio-upload-specs { grid-template-columns: 1fr; }
+  .studio-upload-specs > div { border-right: 0; border-bottom: 1px solid #eeeaf8; }
+  .studio-upload-specs > div:last-child { border-bottom: 0; }
 }
 
 /* Community layout refresh: top genre navigation and a roomier feed */
