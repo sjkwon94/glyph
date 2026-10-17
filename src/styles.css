@@ -346,6 +346,37 @@ img { max-width: 100%; }
   .creator-upload-specs p, .creator-upload-note { font-size: 11px; }
 }
 
+.image-crop-editor { margin-top: 14px; padding: 15px; border: 1px solid #e4e0f1; border-radius: 8px; background: #fbfaff; }
+.image-crop-editor + .image-crop-editor { margin-top: 12px; }
+.image-crop-editor-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.image-crop-editor-heading strong { font-size: 14px; }
+.image-crop-editor-heading small { color: #8b82aa; font-size: 11px; }
+.image-crop-preview { width: 100%; max-height: 310px; position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid #d8d1ef; border-radius: 6px; background: #ece9f5; cursor: grab; touch-action: none; }
+.image-crop-preview:active { cursor: grabbing; }
+.image-crop-preview > img { width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; transition: transform .12s ease; }
+.image-crop-preview > img.dragging { transition: none; }
+.image-crop-empty { display: grid; justify-items: center; gap: 6px; min-height: 120px; color: #8b82aa; font-size: 11px; }
+.image-crop-frame { position: absolute; inset: 10px; display: grid; place-items: end end; color: rgba(255,255,255,.85); pointer-events: none; }
+.image-crop-controls { display: grid; gap: 8px; margin-top: 13px; }
+.image-crop-controls label { display: grid; grid-template-columns: 108px minmax(0, 1fr); align-items: center; gap: 10px; color: #756d96; font-size: 11px; }
+.image-crop-controls label span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.image-crop-controls label span b { margin-left: auto; color: #5646d6; font-size: 10px; }
+.image-crop-controls input[type='range'] { width: 100%; accent-color: #6c5ce7; }
+.image-crop-rotate { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 3px; color: #756d96; font-size: 11px; }
+.image-crop-rotate button { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #ddd7f0; border-radius: 5px; color: #5646d6; background: #fff; cursor: pointer; }
+.image-crop-rotate button:disabled { opacity: .45; cursor: default; }
+.image-crop-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+.image-crop-actions label { cursor: pointer; }
+.image-crop-actions input[type='file'] { display: none; }
+.image-crop-message { margin: 9px 0 0; color: #6c5ce7; font-size: 11px; }
+@media (max-width: 680px) {
+  .image-crop-editor { padding: 12px; }
+  .image-crop-editor-heading { display: grid; gap: 3px; }
+  .image-crop-editor-heading small { font-size: 10px; }
+  .image-crop-controls label { grid-template-columns: 94px minmax(0, 1fr); font-size: 10px; }
+  .image-crop-actions > button, .image-crop-actions > label { flex: 1; justify-content: center; }
+}
+
 /* Author dashboard: works are the primary control surface. */
 .studio-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .studio-work-card-actions { display: grid; justify-items: end; gap: 10px; }
