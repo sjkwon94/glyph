@@ -22,6 +22,7 @@ export function HomePage() {
             <span className="spotlight-label">오늘의 추천</span>
             <h1>{featured.title}</h1>
             <p className="spotlight-tagline">{featured.tagline}</p>
+            <span className="spotlight-author">작가 {featured.author}</span>
             <p className="spotlight-description">{featured.description}</p>
             <div className="spotlight-meta">
               <span>{featured.categoryLabel}</span>
@@ -33,7 +34,7 @@ export function HomePage() {
               <Link className="secondary-button" to={`/novel/${featured.id}`}>작품 정보</Link>
             </div>
           </div>
-          <BookCover novel={featured} className="spotlight-cover" />
+          <div className="spotlight-visual" aria-label={`${featured.title} 추천 이미지`}><BookCover novel={featured} className="spotlight-cover" /><span>{featured.badge ?? featured.categoryLabel}</span></div>
         </div>
       </section>
 

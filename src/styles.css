@@ -354,6 +354,18 @@ img { max-width: 100%; }
 .admin-list-item > div { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .admin-list-item > div span { color: #888; font-size: 12px; white-space: nowrap; }
 .admin-list-item p { margin: 7px 0 0; color: #666; font-size: 13px; line-height: 1.6; }
+.author-admin-heading { align-items: flex-start !important; }
+.author-admin-heading > span { display: grid; gap: 4px; }
+.author-admin-heading strong { font-size: 15px; }
+.author-admin-heading em { color: var(--accent-dark); font-size: 12px; font-style: normal; }
+.author-admin-heading select { min-width: 142px; height: 36px; padding: 0 9px; border: 1px solid #d9d5eb; border-radius: 5px; color: #4f438d; background: #faf9ff; font-size: 12px; }
+.admin-confirm { margin-top: 15px; padding: 15px; border: 1px solid #e4ddff; border-radius: 6px; background: #faf9ff; }
+.admin-confirm > strong { color: #4b3d9a; font-size: 13px; }
+.admin-confirm > p { margin: 6px 0 10px; color: #777; font-size: 12px; }
+.admin-confirm > div:not(.admin-confirm-actions) { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.admin-confirm input { width: 100%; height: 38px; padding: 0 10px; border: 1px solid #d9d9d9; border-radius: 4px; background: white; }
+.admin-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 11px; }
+.admin-confirm-actions button { min-height: 36px; padding: 0 12px; font-size: 12px; }
 .admin-empty { display: grid; min-height: 230px; place-items: center; align-content: center; gap: 9px; padding: 28px 20px; text-align: center; color: #999; }
 .admin-empty svg { color: var(--accent); }
 .admin-empty h3, .admin-empty p { margin: 0; }
@@ -412,6 +424,9 @@ img { max-width: 100%; }
   .admin-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
   .admin-tabs::-webkit-scrollbar { display: none; }
   .admin-tabs button { flex: 0 0 auto; }
+  .author-admin-heading { gap: 10px; }
+  .author-admin-heading select { min-width: 124px; }
+  .admin-confirm > div:not(.admin-confirm-actions) { grid-template-columns: 1fr; }
 }
 
 /* 2026-10 simple content-first refresh */
@@ -452,19 +467,23 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .section-kicker { color: var(--accent-dark); letter-spacing: 0; text-transform: none; }
 
 .home-spotlight { padding: 28px 0 0; background: #fff; }
-.spotlight-card { min-height: 330px; padding: 44px 64px; display: flex; align-items: center; position: relative; overflow: hidden; background: #f3f1fb; }
+.spotlight-card { min-height: 330px; padding: 44px 64px; display: flex; align-items: center; position: relative; overflow: visible; background: #f3f1fb; }
 .spotlight-card::after { content: ''; position: absolute; width: 320px; height: 320px; right: -90px; top: -90px; border-radius: 50%; background: rgba(108,92,231,.09); }
 .spotlight-copy { width: min(620px, calc(100% - 230px)); position: relative; z-index: 2; }
 .spotlight-label { display: inline-block; margin-bottom: 12px; color: #5646d6; font-size: 12px; font-weight: 700; }
 .spotlight-copy h1 { margin: 0 0 7px; font-size: 38px; line-height: 1.25; letter-spacing: -.045em; }
 .spotlight-tagline { margin: 0 0 13px; color: #333; font-size: 17px; font-weight: 600; }
+.spotlight-author { display: block; margin: -3px 0 13px; color: #777; font-size: 12px; }
 .spotlight-description { max-width: 580px; margin: 0; color: #666; font-size: 13px; line-height: 1.7; }
 .spotlight-meta { margin: 17px 0 20px; display: flex; align-items: center; gap: 13px; color: #777; font-size: 12px; }
 .spotlight-meta span { display: inline-flex; align-items: center; gap: 3px; }
 .spotlight-meta span + span { padding-left: 13px; border-left: 1px solid #d1d9d3; }
 .spotlight-meta svg { color: #ff9b17; }
 .spotlight-actions { display: flex; gap: 8px; }
-.spotlight-cover { width: 168px; height: 168px; aspect-ratio: 1; position: absolute; right: 78px; bottom: -8px; z-index: 2; transform: rotate(2deg); }
+.spotlight-visual { width: 265px; height: 265px; display: grid; place-items: center; position: absolute; right: 68px; bottom: -52px; z-index: 2; }
+.spotlight-visual::before { content: ''; position: absolute; inset: 11px 2px 4px 28px; border-radius: 50%; background: radial-gradient(circle, rgba(108,92,231,.28), transparent 67%); filter: blur(9px); }
+.spotlight-cover { width: 238px; height: 238px; aspect-ratio: 1; position: relative; z-index: 1; transform: rotate(4deg); box-shadow: -18px 22px 34px rgba(39,31,76,.2); }
+.spotlight-visual > span { position: absolute; top: 15px; left: 0; z-index: 2; padding: 7px 10px; border: 1px solid #d6ceff; border-radius: 3px; color: #5646d6; background: rgba(255,255,255,.9); font-size: 11px; font-weight: 800; }
 
 .home-category-nav { border-bottom: 1px solid #ededed; }
 .home-category-nav > div { display: flex; align-items: center; gap: 34px; min-height: 60px; overflow-x: auto; }
@@ -721,7 +740,7 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   .home-novel-grid { grid-template-columns: repeat(4, 1fr); }
   .home-novel-grid .novel-card:last-child { display: none; }
   .spotlight-card { padding-left: 42px; padding-right: 42px; }
-  .spotlight-cover { right: 45px; }
+  .spotlight-visual { right: 30px; }
   .home-update-layout { gap: 30px; }
 }
 
@@ -741,7 +760,10 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
   .spotlight-meta { margin: 14px 0 18px; flex-wrap: wrap; gap: 6px 9px; font-size: 10px; }
   .spotlight-meta span + span { padding-left: 9px; }
   .spotlight-actions .primary-button, .spotlight-actions .secondary-button { min-height: 38px; padding: 0 12px; font-size: 12px; }
-  .spotlight-cover { width: 89px; height: 89px; aspect-ratio: 1; right: 21px; bottom: 30px; transform: none; }
+  .spotlight-author { margin-bottom: 8px; font-size: 10px; }
+  .spotlight-visual { width: 112px; height: 112px; right: 11px; bottom: 24px; }
+  .spotlight-cover { width: 101px; height: 101px; aspect-ratio: 1; transform: rotate(3deg); }
+  .spotlight-visual > span { top: -3px; left: -6px; padding: 4px 6px; font-size: 8px; }
   .spotlight-cover strong { font-size: 10px; }
   .home-category-nav > div { min-height: 51px; gap: 26px; }
   .home-category-nav a { font-size: 13px; }

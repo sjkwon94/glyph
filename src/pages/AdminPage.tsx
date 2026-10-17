@@ -1,28 +1,33 @@
 import { BadgeCheck, BookOpen, Check, Flag, MessageSquare, ShieldAlert, UserRound, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { categories, novels as demoNovels } from '../data';
-import { useApp } from '../state/AppContext';
+import { type AuthorModerationStatus, type ManagedAuthor, useApp } from '../state/AppContext';
 import { useAuth } from '../state/AuthContext';
 
 const reasonLabels = { spam: '스팸·도배', abuse: '욕설·괴롭힘', spoiler: '악의적 스포일러', copyright: '저작권 침해', other: '기타' };
 const targetTypeLabels = { comment: '댓글', community_post: '게시글', general: '신고마당' };
 const evidenceStatusLabels = { queued: '워터마크 서버 대조 중', detected: '워터마크 일치', not_detected: '자동 탐지 없음', needs_review: '운영자 확인 필요', failed: '분석 실패' };
+const moderationLabels: Record<AuthorModerationStatus, string> = { normal: '정상', suspended_7d: '연재중지 7일', suspended_30d: '연재중지 30일', suspended_1y: '연재중지 1년', permanently_suspended: '연재 영구정지', deleted: '삭제' };
 type AdminTab = 'applications' | 'reports' | 'authors' | 'works' | 'inquiries';
 
 export function AdminPage() {
   const { viewer, demoMode } = useAuth();
-  const { authorApplication, authorWorks, catalogNovels, pendingApplications, reports, reviewAuthorApplication, resolveReport, syncError } = useApp();
+  const { authorApplication, authorWorks, catalogNovels, managedAuthors, pendingApplications, reports, reviewAuthorApplication, resolveReport, moderateAuthor, syncError } = useApp();
   const [note, setNote] = useState('');
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState<AdminTab>('applications');
+  const [confirmAuthor, setConfirmAuthor] = useState<{ author: ManagedAuthor; status: AuthorModerationStatus } | null>(null);
+  const [confirmDisplayName, setConfirmDisplayName] = useState('');
+  const [confirmPenName, setConfirmPenName] = useState('');
   const application = pendingApplications[0] ?? (demoMode && authorApplication.status === 'pending' ? authorApplication : null);
   const visibleWorks = catalogNovels.length ? catalogNovels : demoMode ? demoNovels : [];
-  const authorRows = useMemo(() => {
+  const fallbackAuthors = useMemo<ManagedAuthor[]>(() => {
     const rows = new Map<string, number>();
     visibleWorks.forEach((novel) => rows.set(novel.author, (rows.get(novel.author) ?? 0) + 1));
     if (!rows.size && authorApplication.penName) rows.set(authorApplication.penName, authorWorks.length);
-    return Array.from(rows, ([name, count]) => ({ name, count }));
+    return Array.from(rows, ([name, count], index) => ({ userId: `catalog-author-${index}`, displayName: name, penName: name, applicationStatus: 'approved', moderationStatus: 'normal', workCount: count }));
   }, [authorApplication.penName, authorWorks.length, visibleWorks]);
+  const authorRows = managedAuthors.length ? managedAuthors : fallbackAuthors;
   const tabs: { id: AdminTab; label: string; icon: typeof BadgeCheck; count: number }[] = [
     { id: 'applications', label: '작가 심사', icon: BadgeCheck, count: application ? Math.max(1, pendingApplications.length) : 0 },
     { id: 'reports', label: '콘텐츠 신고', icon: Flag, count: reports.filter((report) => report.status === 'received').length },
@@ -30,6 +35,16 @@ export function AdminPage() {
     { id: 'works', label: '작품 관리', icon: BookOpen, count: visibleWorks.length },
     { id: 'inquiries', label: '문의', icon: MessageSquare, count: 0 },
   ];
+
+  const applyModeration = async (author: ManagedAuthor, status: AuthorModerationStatus, confirmation?: { displayName: string; penName: string }) => {
+    const result = await moderateAuthor(author.userId, status, confirmation);
+    setMessage(result.ok ? `${author.penName} 작가를 ${moderationLabels[status]} 상태로 처리했습니다.` : result.reason ?? '작가 상태를 변경하지 못했습니다.');
+    if (result.ok) {
+      setConfirmAuthor(null);
+      setConfirmDisplayName('');
+      setConfirmPenName('');
+    }
+  };
 
   if (!viewer?.isAdmin) return <div className="page-container inner-page empty-state"><ShieldAlert /><h1>접근 권한이 없습니다</h1><p>운영자 권한은 서버의 관리자 테이블에서만 부여됩니다.</p></div>;
 
@@ -51,7 +66,7 @@ export function AdminPage() {
         <div className="report-queue">{reports.length ? reports.map((report) => <article key={report.id}><div><strong>{reasonLabels[report.reason]}</strong><span>{targetTypeLabels[report.targetType]} · {report.targetAuthor}</span></div><p>{report.details || '상세 설명 없음'}</p>{report.evidence && <div className={`evidence-result evidence-${report.evidence.status}`}><strong>증거 사진 · {evidenceStatusLabels[report.evidence.status]}</strong><span>{report.evidence.fileName} · 분석 신뢰도 {Math.round((report.evidence.confidence ?? 0) * 100)}%</span>{report.evidence.matchedDisplayName && <b>발급 사용자: {report.evidence.matchedDisplayName} ({report.evidence.matchedUserId})</b>}<small>{report.evidence.note}</small></div>}<small>{report.status}</small>{report.status === 'received' && <div><button type="button" onClick={() => void resolveReport(report.id, 'dismissed').then((result) => setMessage(result.ok ? '문제 없음으로 처리했습니다.' : result.reason ?? '처리하지 못했습니다.'))}>문제 없음</button><button type="button" onClick={() => void resolveReport(report.id, 'resolved').then((result) => setMessage(result.ok ? '조치 완료로 처리했습니다.' : result.reason ?? '처리하지 못했습니다.'))}>조치 완료</button></div>}</article>) : <div className="panel-empty">접수된 신고가 없습니다.</div>}</div>
       </section>}
 
-      {activeTab === 'authors' && <section className="admin-panel"><header><div><span className="admin-icon"><UserRound /></span><h2>작가 관리</h2></div><small>{authorRows.length}명</small></header><p className="admin-tab-note">현재 공개 작품과 연결된 작가를 기준으로 표시합니다.</p><div className="admin-list">{authorRows.length ? authorRows.map((author) => <article className="admin-list-item" key={author.name}><div><strong>{author.name}</strong><span>작품 {author.count}개</span></div><p>공개 작품과 연재 상태를 작품 관리 탭에서 확인할 수 있습니다.</p></article>) : <div className="panel-empty">연결된 작가가 없습니다.</div>}</div></section>}
+      {activeTab === 'authors' && <section className="admin-panel"><header><div><span className="admin-icon"><UserRound /></span><h2>작가 관리</h2></div><small>{authorRows.length}명</small></header><p className="admin-tab-note">실명과 필명을 함께 확인하고, 연재 상태를 변경할 수 있습니다. 영구정지·삭제는 이름 확인 후 처리됩니다.</p><div className="admin-list">{authorRows.length ? authorRows.map((author) => <article className="admin-list-item author-admin-item" key={author.userId}><div className="author-admin-heading"><span><strong>{author.displayName}</strong><em>필명 {author.penName}</em></span><select aria-label={`${author.penName} 작가 제재 상태`} value={author.moderationStatus} onChange={(event) => { const status = event.target.value as AuthorModerationStatus; if (status === 'permanently_suspended' || status === 'deleted') { setConfirmAuthor({ author, status }); setConfirmDisplayName(''); setConfirmPenName(''); } else { void applyModeration(author, status); } }}><option value="normal">정상</option><option value="suspended_7d">연재중지 7일</option><option value="suspended_30d">연재중지 30일</option><option value="suspended_1y">연재중지 1년</option><option value="permanently_suspended">연재 영구정지</option><option value="deleted">삭제</option></select></div><p>{author.applicationStatus === 'approved' ? '승인 작가' : `심사 상태: ${author.applicationStatus}`} · 작품 {author.workCount}개</p>{confirmAuthor?.author.userId === author.userId && <div className="admin-confirm"><strong>{author.penName} 작가를 {moderationLabels[confirmAuthor.status]} 처리합니다.</strong><p>작가 이름과 필명을 정확히 입력해야 최종 처리됩니다.</p><div><input value={confirmDisplayName} onChange={(event) => setConfirmDisplayName(event.target.value)} placeholder="작가 이름" aria-label="작가 이름 확인" /><input value={confirmPenName} onChange={(event) => setConfirmPenName(event.target.value)} placeholder="필명" aria-label="필명 확인" /></div><div className="admin-confirm-actions"><button type="button" className="secondary-button" onClick={() => setConfirmAuthor(null)}>취소</button><button type="button" className="primary-button" disabled={confirmDisplayName !== author.displayName || confirmPenName !== author.penName} onClick={() => void applyModeration(author, confirmAuthor.status, { displayName: confirmDisplayName, penName: confirmPenName })}>확인 처리</button></div></div>}</article>) : <div className="panel-empty">연결된 작가가 없습니다.</div>}</div></section>}
 
       {activeTab === 'works' && <section className="admin-panel"><header><div><span className="admin-icon"><BookOpen /></span><h2>작품 관리</h2></div><small>{visibleWorks.length}개</small></header><p className="admin-tab-note">공개 카탈로그에 등록된 작품의 상태를 확인합니다.</p><div className="admin-list">{visibleWorks.length ? visibleWorks.map((novel) => <article className="admin-list-item" key={novel.id}><div><strong>{novel.title}</strong><span>{novel.categoryLabel} · {novel.status}</span></div><p>{novel.author} · {novel.chapters.length}화 · {novel.schedule}</p></article>) : <div className="panel-empty">등록된 작품이 없습니다.</div>}</div></section>}
 

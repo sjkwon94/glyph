@@ -43,6 +43,15 @@ export type AuthorWork = {
   synopsis: string;
   status: 'draft' | 'serializing' | 'complete' | 'hidden';
 };
+export type AuthorModerationStatus = 'normal' | 'suspended_7d' | 'suspended_30d' | 'suspended_1y' | 'permanently_suspended' | 'deleted';
+export type ManagedAuthor = {
+  userId: string;
+  displayName: string;
+  penName: string;
+  applicationStatus: AuthorApplication['status'];
+  moderationStatus: AuthorModerationStatus;
+  workCount: number;
+};
 type Reaction = 'like' | 'dislike' | null;
 
 export type ModerationReport = {
@@ -96,6 +105,7 @@ type PersistedState = {
   readerSettings: ReaderSettings;
   drafts: DraftEpisode[];
   authorWorks: AuthorWork[];
+  managedAuthors: ManagedAuthor[];
   userPosts: CommunityPostItem[];
   adRewardsToday: number;
   authorApplication: AuthorApplication;
@@ -125,6 +135,7 @@ type AppContextValue = PersistedState & {
   unblockUser: (displayName: string) => Promise<ActionResult>;
   reviewAuthorApplication: (userId: string | undefined, status: 'approved' | 'rejected', note: string) => Promise<ActionResult>;
   resolveReport: (reportId: string, status: 'resolved' | 'dismissed') => Promise<ActionResult>;
+  moderateAuthor: (userId: string, status: AuthorModerationStatus, confirmation?: { displayName: string; penName: string }) => Promise<ActionResult>;
   resetDemoData: () => void;
 };
 
@@ -149,6 +160,14 @@ const initialState: PersistedState = {
     { id: 'published-3', novelId: 'demo-work-1', chapterNumber: 3, title: '3화. 열세 번째 발자국', body: '', status: '발행', updatedAt: '10월 12일' },
   ],
   authorWorks: [{ id: 'demo-work-1', slug: 'ash-sword', title: '재가 된 검', category: 'martial', synopsis: '모든 것을 잃은 검객의 마지막 약속.', status: 'serializing' }],
+  managedAuthors: [
+    { userId: 'demo-author-1', displayName: '김도윤', penName: '해무', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+    { userId: 'demo-author-2', displayName: '박서윤', penName: '유성우', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+    { userId: 'demo-author-3', displayName: '이소담', penName: '모과차', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+    { userId: 'demo-author-4', displayName: '정다온', penName: '서하진', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+    { userId: 'demo-author-5', displayName: '최지후', penName: '흑연', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+    { userId: 'demo-author-6', displayName: '윤은재', penName: '여름밤', applicationStatus: 'approved', moderationStatus: 'normal', workCount: 1 },
+  ],
   userPosts: [],
   adRewardsToday: 0,
   authorApplication: emptyApplication,
@@ -157,7 +176,7 @@ const initialState: PersistedState = {
   blockedUsers: [],
 };
 
-const productionState: PersistedState = { ...initialState, cookieBalance: 0, favorites: [], comments: {}, drafts: [], authorWorks: [] };
+const productionState: PersistedState = { ...initialState, cookieBalance: 0, favorites: [], comments: {}, drafts: [], authorWorks: [], managedAuthors: [] };
 
 function loadState(): PersistedState {
   if (!isDemoMode) return productionState;
@@ -219,7 +238,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const { data: novelRows, error: novelError } = await client
         .from('novels')
-        .select('id,slug,title,category,synopsis,status,updated_at,profiles!novels_owner_id_fkey(display_name)')
+        .select('id,owner_id,slug,title,category,synopsis,status,updated_at,profiles!novels_owner_id_fkey(display_name)')
         .in('status', ['serializing', 'complete'])
         .order('updated_at', { ascending: false });
       if (novelError) { if (active) setSyncError(novelError.message); return; }
@@ -289,11 +308,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const applications = viewer.isAdmin
         ? await supabase.from('author_applications').select('*').eq('status', 'pending').order('submitted_at', { ascending: true }).limit(100)
         : { data: [], error: null };
+      const managedAuthorRows = viewer.isAdmin
+        ? await supabase.from('author_applications').select('user_id,pen_name,status,profiles!author_applications_user_id_fkey(display_name)').order('submitted_at', { ascending: false }).limit(500)
+        : { data: [], error: null };
+      const managedNovelOwners = viewer.isAdmin
+        ? await supabase.from('novels').select('owner_id').in('status', ['serializing', 'complete', 'draft', 'hidden']).limit(2000)
+        : { data: [], error: null };
       if (!active) return;
 
       // 포렌식 마이그레이션을 적용하는 동안에도 기존 신고/열람 기능은 중단하지 않는다.
       const evidenceSyncError = evidence.error?.code === '42P01' ? null : evidence.error;
-      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, evidenceSyncError, works.error, postComments.error, postReactions.error, workChapters.error, applications.error].filter(Boolean);
+      const errors = [wallet.error, unlocks.error, reactions.error, comments.error, application.error, posts.error, blocks.error, reports.error, evidenceSyncError, works.error, postComments.error, postReactions.error, workChapters.error, applications.error, managedAuthorRows.error, managedNovelOwners.error].filter(Boolean);
       if (errors.length) setSyncError(errors[0]?.message ?? '일부 데이터를 불러오지 못했습니다.');
 
       const reactionMap: Record<string, Reaction> = {};
@@ -343,6 +368,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
 
+      const workCounts = new Map<string, number>();
+      for (const row of managedNovelOwners.data ?? []) {
+        const ownerId = String(row.owner_id ?? '');
+        if (ownerId) workCounts.set(ownerId, (workCounts.get(ownerId) ?? 0) + 1);
+      }
+      const managedAuthors: ManagedAuthor[] = (managedAuthorRows.data ?? []).map((row) => {
+        const profile = relatedProfile(row.profiles);
+        return {
+          userId: String(row.user_id), displayName: profile.display_name ?? '이름 없음', penName: String(row.pen_name ?? ''),
+          applicationStatus: row.status as AuthorApplication['status'], moderationStatus: 'normal', workCount: workCounts.get(String(row.user_id)) ?? 0,
+        };
+      });
+
       setState((previous) => ({
         ...productionState,
         readerSettings: previous.readerSettings,
@@ -360,6 +398,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           synopsis: String(row.synopsis ?? ''),
           status: row.status as AuthorWork['status'],
         })),
+        managedAuthors,
         drafts: (workChapters.data ?? []).map((row) => ({
           id: String(row.id),
           novelId: String(row.novel_id),
@@ -643,6 +682,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.rpc('resolve_content_report', { p_report_id: reportId, p_status: status, p_note: '' });
       if (error) return { ok: false, reason: error.message };
       commit((previous) => ({ ...previous, reports: previous.reports.map((report) => report.id === reportId ? { ...report, status } : report) }));
+      return { ok: true };
+    },
+    moderateAuthor: async (userId, status, confirmation) => {
+      const author = state.managedAuthors.find((item) => item.userId === userId);
+      if (!author) return { ok: false, reason: '작가 정보를 찾을 수 없습니다.' };
+      if ((status === 'permanently_suspended' || status === 'deleted') && (!confirmation || confirmation.displayName.trim() !== author.displayName || confirmation.penName.trim() !== author.penName)) {
+        return { ok: false, reason: '작가 이름과 필명을 정확히 입력해 주세요.' };
+      }
+      if (isDemoMode) {
+        commit((previous) => ({ ...previous, managedAuthors: previous.managedAuthors.map((item) => item.userId === userId ? { ...item, moderationStatus: status } : item) }));
+        return { ok: true };
+      }
+      if (!supabase || !viewer?.isAdmin) return { ok: false, reason: '처리 권한이 없습니다.' };
+      const { error } = await supabase.rpc('moderate_author', { p_user_id: userId, p_status: status, p_confirm_display_name: confirmation?.displayName ?? '', p_confirm_pen_name: confirmation?.penName ?? '' });
+      if (error) {
+        console.error('[Glyph admin] author moderation failed', { code: error.code, message: error.message, userId, status });
+        return { ok: false, reason: '작가 제재를 저장하지 못했습니다. 운영 데이터베이스 설정을 확인해 주세요.' };
+      }
+      commit((previous) => ({ ...previous, managedAuthors: previous.managedAuthors.map((item) => item.userId === userId ? { ...item, moderationStatus: status } : item) }));
       return { ok: true };
     },
     resetDemoData: () => commit(() => initialState),
