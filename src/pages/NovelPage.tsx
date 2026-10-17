@@ -1,4 +1,4 @@
-import { Bell, BookOpen, Bookmark, ChevronRight, Heart, Image as ImageIcon, ImagePlus, LockKeyhole, MessageCircle, PenLine, Play, Save, Share2, Star, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Bell, BookOpen, Bookmark, ChevronRight, Heart, Image as ImageIcon, ImagePlus, LockKeyhole, MessageCircle, PenLine, Play, Save, Share2, Square, Star, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { BookCover } from '../components/BookCover';
@@ -114,6 +114,7 @@ export function NovelPage() {
           <div className="creator-work-actions"><button type="button" className="secondary-button" onClick={() => { setManagerMessage(''); setAssetOpen(true); }}><ImagePlus size={16} /> 사진 업로드</button><button type="button" className="primary-button" onClick={openNewEpisode}><PenLine size={16} /> 새 회차 쓰기</button></div>
         </header>
         <div className="creator-work-summary"><span>작품 상태 · {creatorWork.status === 'serializing' ? '연재중' : creatorWork.status === 'complete' ? '완결' : '초안'}</span><span>총 {novel.chapters.length}화</span><span>초안 {workDrafts.filter((draft) => draft.status === '초안').length}개</span></div>
+        <section className="creator-upload-guide" aria-label="작품 이미지 업로드 규격"><header><div><span className="section-kicker"><ImageIcon size={14} /> 작품 이미지 규격</span><h3>이 작품의 추천 배너와 썸네일</h3></div></header><div className="creator-upload-specs"><div><span className="creator-spec-icon"><ImageIcon /></span><div><strong>오늘의 추천 배너</strong><b>1440 × 480px</b><p>JPG · PNG · WebP · 최대 5MB<br />문구는 왼쪽 안전 영역 45% 안에 배치</p></div></div><div><span className="creator-spec-icon"><Square /></span><div><strong>작품 썸네일</strong><b>800 × 800px</b><p>정방형 JPG · PNG · WebP · 최대 3MB<br />중요한 얼굴·제목은 중앙 80% 안에 배치</p></div></div></div><p className="creator-upload-note">이 작품에 사용할 이미지만 이 페이지에서 업로드할 수 있습니다.</p></section>
         {workDrafts.length > 0 && <div className="creator-draft-list">{workDrafts.map((draft) => <button type="button" className="creator-draft-row" key={draft.id} onClick={() => openDraft(draft)}><span><strong>{draft.chapterNumber}화 · {draft.title}</strong><small>{draft.status} · {draft.updatedAt}</small></span><ChevronRight size={16} /></button>)}</div>}
       </section>}
 

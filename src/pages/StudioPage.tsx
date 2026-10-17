@@ -1,4 +1,4 @@
-import { BadgeCheck, BarChart3, BookOpen, CalendarClock, ChevronRight, Clock3, Eye, FileCheck2, FileUp, Image as ImageIcon, Link2, LockKeyhole, MessageCircle, Plus, Send, ShieldCheck, Sparkles, Square } from 'lucide-react';
+import { BadgeCheck, BarChart3, BookOpen, CalendarClock, ChevronRight, Clock3, Eye, FileCheck2, FileUp, Image as ImageIcon, Link2, LockKeyhole, MessageCircle, Plus, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Modal } from '../components/Modal';
@@ -27,7 +27,6 @@ export function StudioPage() {
   const [submitting, setSubmitting] = useState(false);
   const hasWorkSample = Boolean(portfolioUrl.trim() || sampleFile || (demoMode && sampleName) || sampleExcerpt.trim().length >= 200);
   const applicationReady = penName.trim().length >= 2 && introduction.trim().length >= 50 && hasWorkSample;
-  const uploadGuide = <section className="studio-upload-guide" aria-label="이미지 업로드 규격"><header><div><span className="section-kicker"><ImageIcon size={14} /> 이미지 업로드 규격</span><h2>추천 배너와 작품 썸네일</h2></div><small>작가 페이지에서 확인하세요</small></header><div className="studio-upload-specs"><div><span className="studio-spec-icon"><ImageIcon /></span><div><strong>오늘의 추천 배너</strong><b>1440 × 480px</b><p>JPG · PNG · WebP · 최대 5MB<br />문구는 왼쪽 안전 영역 45% 안에 배치</p></div></div><div><span className="studio-spec-icon"><Square /></span><div><strong>작품 썸네일</strong><b>800 × 800px</b><p>정방형 JPG · PNG · WebP · 최대 3MB<br />중요한 얼굴·제목은 중앙 80% 안에 배치</p></div></div></div><p className="studio-upload-note">모바일에서도 잘리지 않도록 배너는 핵심 내용을 중앙에 두고, 썸네일은 정방형으로 준비해 주세요.</p></section>;
 
   const submitWork = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,7 +79,6 @@ export function StudioPage() {
               <section className="creator-approval-hero"><div><span className="approval-badge"><ShieldCheck /> 사전 심사제</span><h2>좋은 작품이 독자에게<br />안전하게 닿도록</h2><p>필명과 소개를 작성하고, 아래 두 자료 중 하나 이상을 보내주세요.</p><div className="submission-options"><span><Link2 /><b>포트폴리오</b><small>공개 작품 또는 개인 문서 링크</small></span><em>또는</em><span><FileUp /><b>원고 예시</b><small>파일 첨부 또는 200자 이상 붙여넣기</small></span></div><button className="primary-button" type="button" onClick={() => setApplicationOpen(true)}><Send size={17} /> 작가 등록 신청</button></div><FileCheck2 className="approval-illustration" /></section>
               <section className="approval-steps" aria-label="작가 등록 절차"><div><b>1</b><span><strong>신청서 제출</strong><small>필명·소개·작품 자료</small></span></div><ChevronRight /><div><b>2</b><span><strong>운영팀 심사</strong><small>표절·품질·정책 확인</small></span></div><ChevronRight /><div><b>3</b><span><strong>작가 승인</strong><small>작품 등록 기능 활성화</small></span></div></section>
               <div className="approval-notice"><BadgeCheck /><div><strong>승인은 운영자만 처리합니다.</strong><p>브라우저에서 승인 상태를 바꿀 수 없으며, 실제 서비스에서는 서버 권한으로만 승인됩니다.</p></div></div>
-              {uploadGuide}
             </>
           )}
           <section className="creator-revenue-summary"><div><span className="section-kicker">작가 수익 원칙</span><h2>유료 회차 70% · 후원 90% · 광고 70%</h2><p>실제 공제 항목과 거래별 계산식은 매월 정산서에 투명하게 표시합니다. 플랫폼 부담 2배 이벤트는 작가 정산액을 줄이지 않습니다.</p></div><Link className="secondary-button" to="/creator-policy">정산 정책 보기</Link></section>
@@ -96,7 +94,6 @@ export function StudioPage() {
       <div className="page-container inner-page">
         <header className="page-title split-title"><div><span className="section-kicker"><BadgeCheck size={15} /> 작가 페이지</span><h1>안녕하세요, {authorApplication.penName} 작가님</h1><p>작품 성과와 정산, 독자 반응을 한 곳에서 확인하세요.</p></div><div className="studio-header-actions"><button className="primary-button" type="button" onClick={() => setWorkOpen(true)}><Plus size={17} /> 새 작품 쓰기</button></div></header>
         <section className="settlement-banner"><div><span>총 정산액</span><strong>{demoMode ? '₩1,284,600' : '₩0'}</strong><small>{demoMode ? '누적 정산 데모 데이터' : '정산 데이터 집계 전'} · 거래별 공제 내역은 정산서에서 확인</small></div><Link to="/creator-policy">정산 기준 확인 <ChevronRight size={16} /></Link></section>
-        {uploadGuide}
         <div className="studio-stats"><div><span><Eye /></span><p>총 조회수</p><strong>{demoMode ? '18,420' : '0'}</strong><small>{demoMode ? '지난주보다 12% ↑' : '집계 전'}</small></div><div><span><BookOpen /></span><p>작품 수</p><strong>{authorWorks.length}</strong><small>{authorWorks.length ? '등록된 작품' : '첫 작품을 등록해 주세요'}</small></div><div><span><MessageCircle /></span><p>새 댓글</p><strong>{demoMode ? '126' : '0'}</strong><small>{demoMode ? '답변 대기 14개' : '새 댓글 없음'}</small></div><div><span><BarChart3 /></span><p>평균 완독률</p><strong>{demoMode ? '82.4%' : '-'}</strong><small>{demoMode ? '상위 10%' : '데이터 집계 전'}</small></div></div>
         <div className="studio-layout">
           <section className="studio-main">
