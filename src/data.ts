@@ -23,6 +23,8 @@ export type Novel = {
   accent: string;
   badge?: string;
   rating: number;
+  /** Number of readers who currently have this work in their favorites. */
+  favoriteCount: number;
   readers: string;
   likes: number;
   dislikes: number;
@@ -125,7 +127,7 @@ export const novels: Novel[] = [
     id: 'ash-sword', title: '재가 된 검', author: '해무', category: 'martial', categoryLabel: '무협',
     tagline: '죽은 사부의 편지가 강호를 다시 열었다',
     description: '십 년 전 천문곡에서 모든 것을 잃은 진무혁. 죽은 사부에게서 날아온 한 통의 편지를 따라, 지워진 이름과 뒤바뀐 죽음의 진실을 추적한다.',
-    color: '#29241f', accent: '#df6046', badge: '오늘 1위', rating: 4.9, readers: '12.8만', likes: 8421, dislikes: 123,
+    color: '#29241f', accent: '#df6046', badge: '오늘 1위', rating: 4.9, favoriteCount: 28400, readers: '12.8만', likes: 8421, dislikes: 123,
     tags: ['정통무협', '복수', '미스터리'], status: '연재중', schedule: '매주 월·수·금', days: ['mon', 'wed', 'fri'],
     chapters: compactChapters('ash', ['죽은 자의 편지', '이름 없는 주막', '열세 번째 발자국']),
   },
@@ -133,7 +135,7 @@ export const novels: Novel[] = [
     id: 'winter-orbit', title: '겨울 궤도의 편지', author: '유성우', category: 'sf', categoryLabel: 'SF',
     tagline: '지구가 보낸 마지막 메시지가 80년 늦게 도착했다',
     description: '목성 궤도 정거장의 통신사 윤서는 멸망한 지구에서 계속 도착하는 편지 속에서 살아 있는 한 사람의 신호를 발견한다.',
-    color: '#1c2838', accent: '#85b6d9', badge: '독점', rating: 4.8, readers: '8.4만', likes: 6102, dislikes: 88,
+    color: '#1c2838', accent: '#85b6d9', badge: '독점', rating: 4.8, favoriteCount: 19100, readers: '8.4만', likes: 6102, dislikes: 88,
     tags: ['우주', '휴먼드라마', '미스터리'], status: '연재중', schedule: '매주 화·토', days: ['tue', 'sat'],
     chapters: compactChapters('winter', ['80년 늦은 안부', '유령 주파수', '푸른 별의 목소리']),
   },
@@ -141,7 +143,7 @@ export const novels: Novel[] = [
     id: 'monster-cafe', title: '괴물들의 심야 카페', author: '모과차', category: 'fantasy', categoryLabel: '판타지',
     tagline: '자정이 지나면 손님은 사람이 아니다',
     description: '폐업 직전의 카페를 물려받은 소담. 그런데 자정부터 새벽 네 시까지, 인간이 아닌 손님들의 고민 상담이 시작된다.',
-    color: '#26342b', accent: '#d5ad65', badge: '급상승', rating: 4.9, readers: '9.1만', likes: 7022, dislikes: 64,
+    color: '#26342b', accent: '#d5ad65', badge: '급상승', rating: 4.9, favoriteCount: 22300, readers: '9.1만', likes: 7022, dislikes: 64,
     tags: ['힐링', '도시판타지', '요리'], status: '연재중', schedule: '매일 연재', days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
     chapters: compactChapters('cafe', ['어서 오세요, 인간은 처음이죠?', '울지 못하는 도깨비', '보름달 한 스푼']),
   },
@@ -149,7 +151,7 @@ export const novels: Novel[] = [
     id: 'our-temperature', title: '우리 사이의 온도', author: '서하진', category: 'romance', categoryLabel: '로맨스',
     tagline: '헤어진 연인과 한집에서 겨울을 나게 됐다',
     description: '보일러가 고장 난 오래된 한옥. 건축가 다온은 리모델링 현장에서 7년 전 헤어진 연인 재하와 다시 만난다.',
-    color: '#513737', accent: '#f0a597', rating: 4.7, readers: '6.7만', likes: 4892, dislikes: 152,
+    color: '#513737', accent: '#f0a597', rating: 4.7, favoriteCount: 17600, readers: '6.7만', likes: 4892, dislikes: 152,
     tags: ['재회', '현대로맨스', '동거'], status: '완결', schedule: '총 84화', days: [],
     chapters: compactChapters('temp', ['영하 8도의 재회', '두 개의 머그컵', '녹지 않는 마음']),
   },
@@ -157,7 +159,7 @@ export const novels: Novel[] = [
     id: 'missing-floor', title: '사라진 13층', author: '흑연', category: 'mystery', categoryLabel: '미스터리',
     tagline: '엘리베이터에는 없는 층, 그곳에서 전화가 왔다',
     description: '신입 경비원 지후는 매일 새벽 3시 13분, 존재하지 않는 13층에서 내려오는 호출을 받는다.',
-    color: '#302c35', accent: '#b49ad5', badge: '완결 임박', rating: 4.8, readers: '7.9만', likes: 5780, dislikes: 96,
+    color: '#302c35', accent: '#b49ad5', badge: '완결 임박', rating: 4.8, favoriteCount: 14300, readers: '7.9만', likes: 5780, dislikes: 96,
     tags: ['추리', '오컬트', '밀실'], status: '연재중', schedule: '매주 목·일', days: ['thu', 'sun'],
     chapters: compactChapters('floor', ['없는 층의 호출', 'CCTV 속의 나', '13호 열쇠']),
   },
@@ -165,7 +167,7 @@ export const novels: Novel[] = [
     id: 'laundry', title: '수요일의 세탁소', author: '여름밤', category: 'daily', categoryLabel: '일상',
     tagline: '지워지지 않는 얼룩에는 사연이 있다',
     description: '오래된 동네 세탁소를 운영하는 은재. 매주 수요일마다 옷과 함께 비밀을 맡기는 손님들이 찾아온다.',
-    color: '#36515a', accent: '#e9c976', rating: 4.9, readers: '5.5만', likes: 4591, dislikes: 31,
+    color: '#36515a', accent: '#e9c976', rating: 4.9, favoriteCount: 11800, readers: '5.5만', likes: 4591, dislikes: 31,
     tags: ['힐링', '옴니버스', '가족'], status: '연재중', schedule: '매주 수요일', days: ['wed'],
     chapters: compactChapters('laundry', ['빨간 코트의 주인', '주머니 속 영수증', '비 오는 날의 셔츠']),
   },

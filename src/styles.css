@@ -109,7 +109,7 @@ img { max-width: 100%; }
 .novel-card h3 { margin: 5px 0 4px; font-family: 'Noto Serif KR', serif; font-size: 18px; letter-spacing: -.04em; }
 .novel-card p { margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.55; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card-meta { display: flex; gap: 13px; color: #8c8379; font-size: 11px; }
-.card-meta span { display: flex; align-items: center; gap: 3px; }.card-meta span:first-child { color: #b67627; }
+.card-meta span { display: flex; align-items: center; gap: 3px; }.card-meta span:first-child { color: #b67627; }.card-meta .favorite-meta.selected { color: var(--accent); }
 .favorite-button { position: absolute; right: 0; bottom: 30px; width: 29px; height: 29px; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: #b8afa5; cursor: pointer; }
 .favorite-button.selected { color: var(--accent); }
 

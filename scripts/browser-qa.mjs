@@ -14,6 +14,7 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   mobile.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await mobile.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+  await mobile.getByLabel('선호 고객 28,401명').first().waitFor();
 
   const mobileMetrics = await mobile.evaluate(() => ({
     innerWidth: window.innerWidth,

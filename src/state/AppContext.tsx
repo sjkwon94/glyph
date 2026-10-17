@@ -299,7 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           id: String(row.slug), title: String(row.title), author: profile.display_name ?? '글리프', category, categoryLabel: getCategoryLabel(category),
           tagline: String(row.synopsis || '새로운 이야기가 시작됩니다.'), description: String(row.synopsis || ''), color, accent,
           coverUrl: publicNovelAssetUrl(row.cover_path), bannerUrl: publicNovelAssetUrl(row.banner_path),
-          rating: 0, readers: '신규', likes: 0, dislikes: 0, tags: [getCategoryLabel(category)], status: row.status === 'complete' ? '완결' : '연재중', schedule: '자유 연재', days: [],
+          rating: 0, favoriteCount: 0, readers: '신규', likes: 0, dislikes: 0, tags: [getCategoryLabel(category)], status: row.status === 'complete' ? '완결' : '연재중', schedule: '자유 연재', days: [],
           chapters: chapterRows.map((chapter: Record<string, unknown>) => {
             const body = accessibleBodies.get(String(chapter.id)) ?? '';
             return { id: String(chapter.id), number: Number(chapter.chapter_number), title: String(chapter.title), publishedAt: String(chapter.published_at ?? '').slice(0, 10), price: Number(chapter.price_cookies), words: body.length, content: body ? body.split(/\n{2,}/).filter(Boolean) : [] };
