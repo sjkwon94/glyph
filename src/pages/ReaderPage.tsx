@@ -1,4 +1,4 @@
-import { ArrowLeft, Bookmark, Check, ChevronLeft, ChevronRight, Coins, List, LockKeyhole, Maximize, Minus, Moon, Settings, Sun, Type, X } from 'lucide-react';
+import { ArrowLeft, Bookmark, Check, ChevronLeft, ChevronRight, Coins, List, LockKeyhole, Maximize, Minus, Moon, Settings, Star, Sun, Type, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Modal } from '../components/Modal';
@@ -44,11 +44,20 @@ function UnlockDialog({ chapterTitle, price, onUnlock, onAd, onClose, insufficie
   );
 }
 
+function ChapterRating({ chapter, userRating, onRate }: { chapter: NonNullable<ReturnType<typeof getNovel>>['chapters'][number]; userRating?: number; onRate: (rating: number) => void }) {
+  const baseCount = chapter.ratingCount ?? 0;
+  const baseRating = chapter.rating ?? 0;
+  const responseCount = baseCount + (userRating ? 1 : 0);
+  const average = responseCount ? ((baseRating * baseCount + (userRating ?? 0)) / responseCount).toFixed(1) : '-';
+
+  return <section className="chapter-rating" aria-label="회차 평점"><div className="chapter-rating-summary"><span>이 회차는 어땠나요?</span><div><strong>{average}</strong><small>평점 · 반응 {responseCount.toLocaleString('ko-KR')}명</small></div></div><div className="chapter-rating-stars" role="group" aria-label={`${chapter.number}화 별점 선택`}>{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={userRating && rating <= userRating ? 'selected' : ''} aria-label={`${rating}점`} aria-pressed={userRating === rating} onClick={(event) => { event.stopPropagation(); onRate(rating); }}><Star size={20} fill={userRating && rating <= userRating ? 'currentColor' : 'none'} /></button>)}</div><p>{userRating ? `내 평점 ${userRating}점이 반영되었습니다.` : '별점을 선택해 회차에 대한 반응을 남겨주세요.'}</p></section>;
+}
+
 export function ReaderPage() {
   const { demoMode } = useAuth();
   const { novelId, chapterId } = useParams();
   const navigate = useNavigate();
-  const { catalogNovels, syncing, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
+  const { catalogNovels, syncing, readerSettings, updateReaderSettings, bookmarks, toggleBookmark, chapterRatings, rateChapter, unlocked, unlockChapter, grantAdReward, adRewardsToday } = useApp();
   const novel = catalogNovels.find((item) => item.id === novelId) ?? (demoMode ? getNovel(novelId) : undefined);
   const chapterIndex = novel?.chapters.findIndex((item) => item.id === chapterId) ?? -1;
   const chapter = chapterIndex >= 0 ? novel?.chapters[chapterIndex] : undefined;
@@ -183,7 +192,7 @@ export function ReaderPage() {
           <article className="reader-content" draggable={false} onCopy={(event) => event.preventDefault()} onCut={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} onContextMenu={(event) => event.preventDefault()} onClick={() => { if (window.getSelection()?.toString()) return; setChromeVisible((visible) => !visible); }}>
             {page === 0 && <div className="chapter-heading"><span>{chapter.number}화</span><h1>{chapter.title}</h1><i /></div>}
             {pages[page].map((paragraph, index) => <p key={`${page}-${index}`}>{paragraph}</p>)}
-            {page === pages.length - 1 && <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p>{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>}
+            {page === pages.length - 1 && <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p><ChapterRating chapter={chapter} userRating={chapterRatings[chapter.id]} onRate={(rating) => rateChapter(chapter.id, rating)} />{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>}
           </article>
           <button className="tap-zone tap-right" type="button" onClick={next} aria-label="다음 페이지"><ChevronRight /></button>
         </main>
@@ -192,7 +201,7 @@ export function ReaderPage() {
           <article className="reader-content scroll-content" draggable={false} onCopy={(event) => event.preventDefault()} onCut={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} onContextMenu={(event) => event.preventDefault()} onClick={() => setChromeVisible((visible) => !visible)}>
             <div className="chapter-heading"><span>{chapter.number}화</span><h1>{chapter.title}</h1><i /></div>
             {chapter.content.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-            <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p>{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>
+            <div className="chapter-end"><span>✦</span><p>{chapter.number}화 끝</p><ChapterRating chapter={chapter} userRating={chapterRatings[chapter.id]} onRate={(rating) => rateChapter(chapter.id, rating)} />{chapterIndex < novel.chapters.length - 1 && <button type="button" className="secondary-button" onClick={(event) => { event.stopPropagation(); openChapter(chapterIndex + 1); }}>다음 화 보기 <ChevronRight size={17} /></button>}</div>
           </article>
         </main>
       )}

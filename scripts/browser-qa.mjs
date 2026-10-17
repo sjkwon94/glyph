@@ -70,6 +70,13 @@ try {
   await mobile.getByRole('link', { name: /첫 화 읽기/ }).click();
   await mobile.waitForSelector('.reader-content');
   await mobile.screenshot({ path: path.join(output, 'reader-mobile.png'), fullPage: false });
+  for (let index = 0; index < 10 && !(await mobile.locator('.chapter-rating').count()); index += 1) {
+    await mobile.locator('.tap-right').click({ position: { x: 40, y: 300 } });
+    await mobile.waitForTimeout(80);
+  }
+  await mobile.getByRole('group', { name: /별점 선택/ }).waitFor();
+  await mobile.getByRole('button', { name: '5점', exact: true }).click();
+  await mobile.getByText('내 평점 5점이 반영되었습니다.').waitFor();
   for (let index = 0; index < 6 && !(await mobile.locator('.unlock-dialog').count()); index += 1) {
     await mobile.locator('.tap-right').click({ position: { x: 40, y: 300 } });
     await mobile.waitForTimeout(80);

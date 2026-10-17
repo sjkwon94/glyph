@@ -105,6 +105,7 @@ type PersistedState = {
   favorites: string[];
   bookmarks: string[];
   reactions: Record<string, Reaction>;
+  chapterRatings: Record<string, number>;
   comments: Record<string, CommentItem[]>;
   readerSettings: ReaderSettings;
   drafts: DraftEpisode[];
@@ -125,6 +126,7 @@ type AppContextValue = PersistedState & {
   toggleFavorite: (novelId: string) => void;
   toggleBookmark: (chapterId: string) => void;
   setReaction: (targetId: string, reaction: Reaction) => void;
+  rateChapter: (chapterId: string, rating: number) => void;
   addComment: (targetId: string, body: string) => Promise<ActionResult>;
   createCommunityPost: (category: Exclude<CategoryId, 'all'>, title: string, body: string) => Promise<ActionResult>;
   updateReaderSettings: (partial: Partial<ReaderSettings>) => void;
@@ -153,6 +155,7 @@ const initialState: PersistedState = {
   favorites: ['ash-sword'],
   bookmarks: [],
   reactions: {},
+  chapterRatings: {},
   comments: {
     'ash-sword': [
       { id: 'c1', author: '청풍독자', body: '첫 문장부터 분위기가 좋네요. 다음 화도 기대합니다.', createdAt: '8분 전' },
@@ -181,7 +184,7 @@ const initialState: PersistedState = {
   blockedUsers: [],
 };
 
-const productionState: PersistedState = { ...initialState, cookieBalance: 0, favorites: [], comments: {}, drafts: [], authorWorks: [], managedAuthors: [] };
+const productionState: PersistedState = { ...initialState, cookieBalance: 0, favorites: [], comments: {}, chapterRatings: {}, drafts: [], authorWorks: [], managedAuthors: [] };
 
 function loadState(): PersistedState {
   if (!isDemoMode) return productionState;
@@ -470,6 +473,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     syncError,
     toggleFavorite: (novelId) => commit((previous) => ({ ...previous, favorites: previous.favorites.includes(novelId) ? previous.favorites.filter((id) => id !== novelId) : [...previous.favorites, novelId] })),
     toggleBookmark: (chapterId) => commit((previous) => ({ ...previous, bookmarks: previous.bookmarks.includes(chapterId) ? previous.bookmarks.filter((id) => id !== chapterId) : [...previous.bookmarks, chapterId] })),
+    rateChapter: (chapterId, rating) => {
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) return;
+      commit((previous) => ({ ...previous, chapterRatings: { ...previous.chapterRatings, [chapterId]: rating } }));
+    },
     setReaction: (targetKey, reaction) => {
       if (!isDemoMode && (!supabase || !viewer)) {
         setSyncError('로그인 후 좋아요와 싫어요를 남길 수 있습니다.');

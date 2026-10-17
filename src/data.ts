@@ -9,6 +9,8 @@ export type Chapter = {
   price: number;
   words: number;
   content: string[];
+  rating?: number;
+  ratingCount?: number;
 };
 
 export type Novel = {
@@ -118,6 +120,8 @@ function compactChapters(prefix: string, titles: string[]): Chapter[] {
     publishedAt: `2026.10.${String(12 - index).padStart(2, '0')}`,
     price: index === 0 ? 0 : 3,
     words: 4200 + index * 180,
+    rating: 4.7 + (index % 3) * 0.1,
+    ratingCount: 680 - index * 37,
     content: index === 0 ? ashChapter1 : index === 1 ? ashChapter2 : ashChapter3,
   }));
 }
