@@ -7,6 +7,11 @@ import { useApp } from '../state/AppContext';
 import { useAuth } from '../state/AuthContext';
 
 type DayFilter = 'all' | WeekdayId;
+type StatusFilter = '연재중' | '완결';
+const statusOptions: Array<{ id: string; label: StatusFilter }> = [
+  { id: 'ongoing', label: '연재중' },
+  { id: 'complete', label: '완결' },
+];
 
 export function DiscoverPage() {
   const { catalogNovels } = useApp();
@@ -15,32 +20,42 @@ export function DiscoverPage() {
   const [params, setParams] = useSearchParams();
   const initial = (params.get('category') as CategoryId) || 'all';
   const initialDay = (params.get('day') as DayFilter) || 'all';
+  const initialStatuses = params.get('status')?.split(',').filter((value): value is StatusFilter => statusOptions.some((item) => item.id === value) || value === '연재중' || value === '완결').map((value) => statusOptions.find((item) => item.id === value)?.label ?? value as StatusFilter) ?? [];
   const [category, setCategory] = useState<CategoryId>(categories.some((item) => item.id === initial) ? initial : 'all');
   const [day, setDay] = useState<DayFilter>(initialDay === 'all' || weekdays.some((item) => item.id === initialDay) ? initialDay : 'all');
+  const [statuses, setStatuses] = useState<StatusFilter[]>(Array.from(new Set(initialStatuses)));
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('popular');
 
   const filtered = useMemo(() => visibleNovels
     .filter((novel) => category === 'all' || novel.category === category)
     .filter((novel) => day === 'all' || novel.days.includes(day))
+    .filter((novel) => statuses.length === 0 || statuses.includes(novel.status))
     .filter((novel) => `${novel.title} ${novel.author} ${novel.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()))
-    .sort((a, b) => sort === 'rating' ? b.rating - a.rating : sort === 'new' ? a.title.localeCompare(b.title) : b.likes - a.likes), [category, day, query, sort, visibleNovels]);
+    .sort((a, b) => sort === 'rating' ? b.rating - a.rating : sort === 'new' ? a.title.localeCompare(b.title) : b.likes - a.likes), [category, day, statuses, query, sort, visibleNovels]);
 
-  const syncParams = (nextCategory: CategoryId, nextDay: DayFilter) => {
+  const syncParams = (nextCategory: CategoryId, nextDay: DayFilter, nextStatuses: StatusFilter[]) => {
     const next = new URLSearchParams();
     if (nextCategory !== 'all') next.set('category', nextCategory);
     if (nextDay !== 'all') next.set('day', nextDay);
+    if (nextStatuses.length) next.set('status', nextStatuses.map((status) => statusOptions.find((item) => item.label === status)?.id ?? status).join(','));
     setParams(next);
   };
 
   const selectCategory = (id: CategoryId) => {
     setCategory(id);
-    syncParams(id, day);
+    syncParams(id, day, statuses);
   };
 
   const selectDay = (id: DayFilter) => {
     setDay(id);
-    syncParams(category, id);
+    syncParams(category, id, statuses);
+  };
+
+  const toggleStatus = (status: StatusFilter) => {
+    const nextStatuses = statuses.includes(status) ? statuses.filter((item) => item !== status) : [...statuses, status];
+    setStatuses(nextStatuses);
+    syncParams(category, day, nextStatuses);
   };
 
   return (
@@ -53,6 +68,7 @@ export function DiscoverPage() {
       <div className="filter-groups">
         <div className="filter-row"><strong>요일</strong><div className="filter-chips" role="group" aria-label="요일 선택"><button type="button" className={day === 'all' ? 'active' : ''} onClick={() => selectDay('all')}>요일 전체</button>{weekdays.map((item) => <button key={item.id} type="button" className={day === item.id ? 'active' : ''} onClick={() => selectDay(item.id)}>{item.label}</button>)}</div></div>
         <div className="filter-row"><strong>장르</strong><div className="filter-chips" role="group" aria-label="장르 선택">{categories.map((item) => <button key={item.id} type="button" className={category === item.id ? 'active' : ''} onClick={() => selectCategory(item.id)}>{item.label === '전체' ? '장르 전체' : item.label}</button>)}</div></div>
+        <div className="filter-row"><strong>상태</strong><div className="filter-chips" role="group" aria-label="연재 상태 선택"><button type="button" className={statuses.length === 0 ? 'active' : ''} aria-pressed={statuses.length === 0} onClick={() => { setStatuses([]); syncParams(category, day, []); }}>상태 전체</button>{statusOptions.map((item) => <button key={item.id} type="button" className={statuses.includes(item.label) ? 'active' : ''} aria-pressed={statuses.includes(item.label)} onClick={() => toggleStatus(item.label)}>{item.label}</button>)}</div></div>
       </div>
       <div className="results-line"><strong>{filtered.length}</strong>개의 작품</div>
       {filtered.length > 0 ? <div className="novel-grid discover-grid">{filtered.map((novel) => <NovelCard key={novel.id} novel={novel} />)}</div> : <div className="empty-state"><Search size={32} /><h2>검색 결과가 없습니다</h2><p>다른 제목이나 태그로 찾아보세요.</p></div>}

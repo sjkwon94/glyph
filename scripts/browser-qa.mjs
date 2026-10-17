@@ -25,6 +25,13 @@ try {
   if (mobileMetrics.scrollWidth > mobileMetrics.innerWidth) throw new Error(`mobile horizontal overflow: ${mobileMetrics.scrollWidth}/${mobileMetrics.innerWidth}`);
 
   await mobile.goto('http://127.0.0.1:5173/#/discover', { waitUntil: 'networkidle' });
+  await mobile.getByRole('button', { name: '완결', exact: true }).click();
+  if (!mobile.url().includes('status=complete')) throw new Error('status filter query was not persisted');
+  const completedTitles = await mobile.locator('.novel-card h3').allTextContents();
+  if (completedTitles.length !== 1) throw new Error(`completed status filter failed: ${completedTitles.join(', ')}`);
+  await mobile.getByRole('button', { name: '연재중', exact: true }).click();
+  if ((await mobile.locator('.novel-card h3').count()) !== 6) throw new Error('multiple status filters failed');
+  await mobile.getByRole('button', { name: '상태 전체', exact: true }).click();
   await mobile.getByRole('button', { name: '수', exact: true }).click();
   await mobile.getByRole('button', { name: '무협', exact: true }).click();
   await mobile.waitForURL(/category=martial/);
