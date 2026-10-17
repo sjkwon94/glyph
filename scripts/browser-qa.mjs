@@ -55,8 +55,12 @@ try {
   await mobile.reload({ waitUntil: 'networkidle' });
   await mobile.getByRole('heading', { name: '안녕하세요, 테스트작가 작가님' }).waitFor();
   await mobile.screenshot({ path: path.join(output, 'studio-approved-mobile.png'), fullPage: false });
-  if (!(await mobile.getByRole('button', { name: '새 회차 쓰기' }).count())) throw new Error('studio is missing work-specific episode action');
-  if (!(await mobile.getByRole('button', { name: '사진 업로드' }).count())) throw new Error('studio is missing work-specific image action');
+  if (await mobile.getByRole('button', { name: '사진 업로드' }).count()) throw new Error('studio dashboard exposes work image action');
+  await mobile.getByRole('link', { name: /재가 된 검/ }).first().click();
+  if (!mobile.url().includes('#/studio/work/')) throw new Error('studio work did not open management page');
+  await mobile.getByRole('heading', { name: '재가 된 검' }).waitFor();
+  if (!(await mobile.getByRole('button', { name: '새 회차 쓰기' }).count())) throw new Error('work management page is missing episode action');
+  if (!(await mobile.getByRole('button', { name: '사진 업로드' }).count())) throw new Error('work management page is missing image action');
   await mobile.getByRole('button', { name: '새 회차 쓰기' }).click();
   await mobile.getByRole('heading', { name: /재가 된 검 · 새 회차/ }).waitFor();
   await mobile.keyboard.press('Escape');

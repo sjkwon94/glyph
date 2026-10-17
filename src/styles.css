@@ -271,6 +271,7 @@ img { max-width: 100%; }
 
 .creator-work-tools { margin-top: 20px; border: 1px solid #e1ddf3; background: #fff; }
 .creator-work-tools > header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 18px; border-bottom: 1px solid #eeeaf8; }
+.creator-work-tools h1 { margin: 4px 0 0; font-size: 25px; letter-spacing: -.04em; }
 .creator-work-tools h2 { margin: 4px 0 0; font-size: 20px; }
 .creator-work-tools p { margin: 5px 0 0; color: #777; font-size: 11px; }
 .creator-work-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -284,7 +285,7 @@ img { max-width: 100%; }
 @media (max-width: 680px) {
   .creator-work-tools > header { align-items: flex-start; flex-direction: column; gap: 15px; }
   .creator-work-actions { width: 100%; }
-  .creator-work-actions button { flex: 1; }
+  .creator-work-actions button, .creator-work-actions > a { flex: 1; }
   .creator-work-summary { flex-wrap: wrap; gap: 8px 18px; }
   .creator-draft-row { padding: 12px 16px; }
 }

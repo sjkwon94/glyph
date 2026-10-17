@@ -30,6 +30,7 @@ export default function App() {
         <Route path="/read/:novelId/:chapterId" element={<ReaderPage />} />
         <Route path="/community" element={<Navigate to="/community/martial" replace />} />
         <Route path="/community/:categoryId" element={<CommunityPage />} />
+        <Route path="/studio/work/:workId" element={<StudioPage />} />
         <Route path="/studio" element={<StudioPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/auth" element={<AuthPage />} />
