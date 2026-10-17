@@ -481,7 +481,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       return changed ? next : previous;
     });
-  }, [state.authorApplication.penName, state.authorApplication.status, state.authorWorks]);
+  }, [catalogRevision, state.authorApplication.penName, state.authorApplication.status, state.authorWorks]);
 
   const value = useMemo<AppContextValue>(() => ({
     ...state,
