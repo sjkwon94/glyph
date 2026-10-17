@@ -31,6 +31,9 @@ export type Novel = {
   schedule: string;
   days: WeekdayId[];
   chapters: Chapter[];
+  /** Supabase Storage public URLs for author-managed artwork. */
+  coverUrl?: string;
+  bannerUrl?: string;
 };
 
 export type CommunityPost = {

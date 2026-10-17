@@ -467,7 +467,7 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .section-kicker { color: var(--accent-dark); letter-spacing: 0; text-transform: none; }
 
 .home-spotlight { padding: 28px 0 0; background: #fff; }
-.spotlight-card { min-height: 330px; padding: 44px 64px; display: flex; align-items: center; position: relative; overflow: visible; background: #f3f1fb; }
+.spotlight-card { min-height: 330px; padding: 44px 64px; display: flex; align-items: center; position: relative; overflow: visible; background-color: #f3f1fb; background-image: linear-gradient(90deg, rgba(243,241,251,.98) 0%, rgba(243,241,251,.92) 34%, rgba(243,241,251,.48) 72%, rgba(243,241,251,.3) 100%), var(--spotlight-image, none); background-size: cover; background-position: center; }
 .spotlight-card::after { content: ''; position: absolute; width: 320px; height: 320px; right: -90px; top: -90px; border-radius: 50%; background: rgba(108,92,231,.09); }
 .spotlight-copy { width: min(620px, calc(100% - 230px)); position: relative; z-index: 2; }
 .spotlight-label { display: inline-block; margin-bottom: 12px; color: #5646d6; font-size: 12px; font-weight: 700; }
@@ -496,6 +496,7 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .home-novel-grid { grid-template-columns: repeat(5, 1fr); gap: 18px; }
 
 .book-cover { padding: 16px 13px; border: 1px solid rgba(0,0,0,.07); border-radius: 3px; box-shadow: none; background: var(--cover); }
+.book-cover-image { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; }
 .book-cover::before { background: linear-gradient(155deg, rgba(255,255,255,.12), transparent 50%), var(--cover); }
 .book-cover::after { display: none; }
 .cover-ornament { display: none; }
@@ -687,6 +688,8 @@ h1, h2, h3, h4, p, span, strong, small, a, button, input, textarea, select, labe
 .author-application-form input, .author-application-form select, .author-application-form textarea { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 4px; background: white; outline: 0; }
 .author-application-form textarea { min-height: 100px; resize: vertical; }
 .author-application-form fieldset { margin: 4px 0 0; padding: 17px; border: 1px solid var(--line); }
+.work-image-fields { display: grid; gap: 10px; }
+.work-image-fields .file-field { margin-bottom: 0; }
 .author-application-form legend { padding: 0 7px; font-size: 11px; font-weight: 700; }
 .input-with-icon { display: flex; align-items: center; position: relative; }.input-with-icon svg { width: 16px; position: absolute; left: 11px; color: #999; }.input-with-icon input { padding-left: 36px; }
 .form-divider { margin: -2px 0 10px; display: flex; align-items: center; gap: 9px; color: #aaa; font-size: 8px; }.form-divider::before, .form-divider::after { content: ''; height: 1px; flex: 1; background: #eee; }

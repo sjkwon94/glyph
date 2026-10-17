@@ -17,7 +17,7 @@ export function HomePage() {
   return (
     <>
       <section className="home-spotlight">
-        <div className="page-container spotlight-card">
+        <div className="page-container spotlight-card" style={featured.bannerUrl ? ({ '--spotlight-image': `url("${featured.bannerUrl}")` } as React.CSSProperties) : undefined}>
           <div className="spotlight-copy">
             <span className="spotlight-label">오늘의 추천</span>
             <h1>{featured.title}</h1>

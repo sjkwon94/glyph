@@ -19,6 +19,8 @@ export function StudioPage() {
   const [workTitle, setWorkTitle] = useState('');
   const [workCategory, setWorkCategory] = useState<'martial' | 'fantasy' | 'romance' | 'mystery' | 'sf' | 'daily'>('fantasy');
   const [workSynopsis, setWorkSynopsis] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [penName, setPenName] = useState(authorApplication.penName);
   const [genre, setGenre] = useState(authorApplication.genre || 'fantasy');
   const [introduction, setIntroduction] = useState(authorApplication.introduction);
@@ -58,10 +60,10 @@ export function StudioPage() {
     event.preventDefault();
     setSubmitting(true);
     setMessage('');
-    const result = await createNovel(workTitle, workCategory, workSynopsis);
+    const result = await createNovel(workTitle, workCategory, workSynopsis, coverFile, bannerFile);
     setSubmitting(false);
     if (!result.ok) { setMessage(result.reason ?? '작품을 등록하지 못했습니다.'); return; }
-    setWorkTitle(''); setWorkSynopsis(''); setWorkOpen(false);
+    setWorkTitle(''); setWorkSynopsis(''); setCoverFile(null); setBannerFile(null); setWorkOpen(false);
   };
 
   const submitApplication = async (event: FormEvent<HTMLFormElement>) => {
@@ -131,7 +133,7 @@ export function StudioPage() {
         </div>
       </div>
 
-      {workOpen && <Modal title="새 작품 등록" onClose={() => setWorkOpen(false)} wide><form className="author-application-form" onSubmit={submitWork}><div className="application-form-grid"><label>작품 제목<input value={workTitle} onChange={(event) => setWorkTitle(event.target.value)} minLength={1} maxLength={100} placeholder="작품 제목" required /></label><label>장르<select value={workCategory} onChange={(event) => setWorkCategory(event.target.value as typeof workCategory)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작품 소개 <small>{workSynopsis.length.toLocaleString()}/3,000</small><textarea value={workSynopsis} onChange={(event) => setWorkSynopsis(event.target.value)} maxLength={3000} placeholder="독자에게 보여줄 작품 소개를 작성해 주세요." /></label><div className="editor-notice">작품은 먼저 비공개 초안으로 만들어집니다. 첫 회차를 발행하면 연재중 상태로 전환됩니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={() => setWorkOpen(false)}>취소</button><button className="primary-button" disabled={!workTitle.trim() || submitting}><Plus size={17} /> {submitting ? '등록 중…' : '작품 등록'}</button></div></form></Modal>}
+      {workOpen && <Modal title="새 작품 등록" onClose={() => setWorkOpen(false)} wide><form className="author-application-form" onSubmit={submitWork}><div className="application-form-grid"><label>작품 제목<input value={workTitle} onChange={(event) => setWorkTitle(event.target.value)} minLength={1} maxLength={100} placeholder="작품 제목" required /></label><label>장르<select value={workCategory} onChange={(event) => setWorkCategory(event.target.value as typeof workCategory)}>{categories.filter((item) => item.id !== 'all').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><label>작품 소개 <small>{workSynopsis.length.toLocaleString()}/3,000</small><textarea value={workSynopsis} onChange={(event) => setWorkSynopsis(event.target.value)} maxLength={3000} placeholder="독자에게 보여줄 작품 소개를 작성해 주세요." /></label><fieldset className="work-image-fields"><legend>작품 이미지 <small>선택 입력</small></legend><label className="file-field"><ImageIcon /><span><strong>{coverFile?.name || '작품 썸네일 선택'}</strong><small>800 × 800px · JPG, PNG, WebP · 최대 3MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)} /></label><label className="file-field"><ImageIcon /><span><strong>{bannerFile?.name || '오늘의 추천 배너 선택'}</strong><small>1440 × 480px · JPG, PNG, WebP · 최대 5MB</small></span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => setBannerFile(event.target.files?.[0] ?? null)} /></label></fieldset><div className="editor-notice">작품은 먼저 비공개 초안으로 만들어집니다. 이미지는 규격을 확인한 뒤 승인된 작가의 전용 저장소에 안전하게 업로드됩니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="button" onClick={() => setWorkOpen(false)}>취소</button><button className="primary-button" disabled={!workTitle.trim() || submitting}><Plus size={17} /> {submitting ? '등록 중…' : '작품 등록'}</button></div></form></Modal>}
       {editorOpen && activeWork && <Modal title={`${activeWork.title} · ${editingDraftId ? '회차 수정' : '새 회차'}`} onClose={() => setEditorOpen(false)} wide><form className="episode-editor" onSubmit={submitEpisode}><div className="editor-meta"><label>회차 제목<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="예: 북쪽으로 가는 길" /></label><span>{body.length.toLocaleString()}자</span></div><label><span className="sr-only">본문</span><textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={200000} placeholder="이야기를 시작하세요…" autoFocus /></label><div className="editor-notice">입력한 텍스트는 HTML로 실행되지 않으며, 운영 환경에서는 서버에서 한 번 더 검증합니다.</div>{message && <p className="form-message" role="status">{message}</p>}<div className="form-actions"><button className="secondary-button" type="submit" value="draft" disabled={submitting}><Save size={17} /> 초안 저장</button><button className="primary-button" type="submit" value="publish" disabled={submitting || !title.trim() || body.trim().length < 10}><BookOpen size={17} /> 바로 발행</button></div></form></Modal>}
     </div>
   );

@@ -42,6 +42,8 @@ export type AuthorWork = {
   category: Exclude<CategoryId, 'all'>;
   synopsis: string;
   status: 'draft' | 'serializing' | 'complete' | 'hidden';
+  coverUrl?: string;
+  bannerUrl?: string;
 };
 export type AuthorModerationStatus = 'normal' | 'suspended_7d' | 'suspended_30d' | 'suspended_1y' | 'permanently_suspended' | 'deleted';
 export type ManagedAuthor = {
@@ -127,7 +129,7 @@ type AppContextValue = PersistedState & {
   unlockChapter: (chapterId: string, price: number) => Promise<ActionResult>;
   grantAdReward: (amount: number) => boolean;
   mockPurchase: (amount: number) => boolean;
-  createNovel: (title: string, category: Exclude<CategoryId, 'all'>, synopsis: string) => Promise<ActionResult>;
+  createNovel: (title: string, category: Exclude<CategoryId, 'all'>, synopsis: string, coverFile?: File | null, bannerFile?: File | null) => Promise<ActionResult>;
   saveDraft: (novelId: string, title: string, body: string, publish: boolean, draftId?: string) => Promise<ActionResult>;
   submitAuthorApplication: (application: AuthorApplicationInput) => Promise<ActionResult>;
   reportContent: (report: Omit<ModerationReport, 'id' | 'status' | 'createdAt' | 'evidence'> & { evidence?: File | null }) => Promise<ActionResult>;
@@ -191,6 +193,39 @@ function displayDate(value?: string | null) {
   return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
+const NOVEL_ASSET_BUCKET = 'novel-assets';
+const novelAssetSpecs = {
+  cover: { label: '작품 썸네일', mimeTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 3 * 1024 * 1024, width: 800, height: 800 },
+  banner: { label: '추천 배너', mimeTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * 1024 * 1024, width: 1440, height: 480 },
+} as const;
+
+async function validateNovelAsset(file: File | null | undefined, kind: keyof typeof novelAssetSpecs): Promise<string> {
+  if (!file) return '';
+  const spec = novelAssetSpecs[kind];
+  if (!spec.mimeTypes.includes(file.type as (typeof spec.mimeTypes)[number])) return `${spec.label}은 JPG, PNG, WebP만 업로드할 수 있습니다.`;
+  if (file.size > spec.maxBytes) return `${spec.label}은 ${Math.round(spec.maxBytes / (1024 * 1024))}MB 이하만 업로드할 수 있습니다.`;
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => reject(new Error('image decode failed'));
+      image.src = objectUrl;
+    });
+    if (dimensions.width !== spec.width || dimensions.height !== spec.height) return `${spec.label}은 ${spec.width} × ${spec.height}px로 준비해 주세요.`;
+  } catch {
+    return `${spec.label} 파일을 읽을 수 없습니다.`;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+  return '';
+}
+
+function publicNovelAssetUrl(path: unknown): string | undefined {
+  if (!supabase || typeof path !== 'string' || !path) return undefined;
+  return supabase.storage.from(NOVEL_ASSET_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
 function relatedProfile(value: unknown): { id?: string; display_name?: string } {
   if (Array.isArray(value)) return (value[0] ?? {}) as { id?: string; display_name?: string };
   return (value ?? {}) as { id?: string; display_name?: string };
@@ -238,7 +273,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const { data: novelRows, error: novelError } = await client
         .from('novels')
-        .select('id,owner_id,slug,title,category,synopsis,status,updated_at,profiles!novels_owner_id_fkey(display_name)')
+        .select('id,owner_id,slug,title,category,synopsis,status,cover_path,banner_path,updated_at,profiles!novels_owner_id_fkey(display_name)')
         .in('status', ['serializing', 'complete'])
         .order('updated_at', { ascending: false });
       if (novelError) { if (active) setSyncError(novelError.message); return; }
@@ -260,6 +295,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           id: String(row.slug), title: String(row.title), author: profile.display_name ?? '글리프', category, categoryLabel: getCategoryLabel(category),
           tagline: String(row.synopsis || '새로운 이야기가 시작됩니다.'), description: String(row.synopsis || ''), color, accent,
+          coverUrl: publicNovelAssetUrl(row.cover_path), bannerUrl: publicNovelAssetUrl(row.banner_path),
           rating: 0, readers: '신규', likes: 0, dislikes: 0, tags: [getCategoryLabel(category)], status: row.status === 'complete' ? '완결' : '연재중', schedule: '자유 연재', days: [],
           chapters: chapterRows.map((chapter: Record<string, unknown>) => {
             const body = accessibleBodies.get(String(chapter.id)) ?? '';
@@ -297,7 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from('user_blocks').select('blocked_id,profiles!user_blocks_blocked_id_fkey(display_name)').eq('blocker_id', viewer.id),
         supabase.from('content_reports').select('id,target_type,target_id,reason,details,status,created_at').order('created_at', { ascending: false }).limit(100),
         supabase.from('content_report_evidence').select('id,report_id,file_name,detection_status,confidence,matched_watermark_id,detector_note,analyzed_at,reader_watermark_issues(user_id,novel_id,chapter_id,issued_at,profiles!reader_watermark_issues_user_id_fkey(display_name))').order('created_at', { ascending: false }).limit(200),
-        supabase.from('novels').select('id,slug,title,category,synopsis,status').eq('owner_id', viewer.id).order('updated_at', { ascending: false }),
+        supabase.from('novels').select('id,slug,title,category,synopsis,status,cover_path,banner_path').eq('owner_id', viewer.id).order('updated_at', { ascending: false }),
         supabase.from('comments').select('post_id').not('post_id', 'is', null).eq('status', 'visible').limit(10000),
         supabase.from('reactions').select('target_id,value').eq('target_type', 'community_post').limit(10000),
       ]);
@@ -397,6 +433,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           category: row.category as Exclude<CategoryId, 'all'>,
           synopsis: String(row.synopsis ?? ''),
           status: row.status as AuthorWork['status'],
+          coverUrl: publicNovelAssetUrl(row.cover_path),
+          bannerUrl: publicNovelAssetUrl(row.banner_path),
         })),
         managedAuthors,
         drafts: (workChapters.data ?? []).map((row) => ({
@@ -501,11 +539,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       commit((previous) => ({ ...previous, cookieBalance: previous.cookieBalance + amount }));
       return true;
     },
-    createNovel: async (title, category, synopsis) => {
+    createNovel: async (title, category, synopsis, coverFile, bannerFile) => {
       const cleanTitle = title.trim().slice(0, 100);
       const cleanSynopsis = synopsis.trim().slice(0, 3000);
       if (!cleanTitle) return { ok: false, reason: '작품 제목을 입력해 주세요.' };
       if (state.authorApplication.status !== 'approved') return { ok: false, reason: '작가 승인 후 작품을 등록할 수 있습니다.' };
+      const coverError = await validateNovelAsset(coverFile, 'cover');
+      if (coverError) return { ok: false, reason: coverError };
+      const bannerError = await validateNovelAsset(bannerFile, 'banner');
+      if (bannerError) return { ok: false, reason: bannerError };
       const work: AuthorWork = {
         id: crypto.randomUUID(),
         slug: `work-${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`,
@@ -519,10 +561,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { ok: true };
       }
       if (!supabase || !viewer) return { ok: false, reason: '로그인 후 작품을 등록할 수 있습니다.' };
-      const { data, error } = await supabase.from('novels').insert({ owner_id: viewer.id, slug: work.slug, title: work.title, category: work.category, synopsis: work.synopsis, status: 'draft' }).select('id,slug,title,category,synopsis,status').single();
+      const client = supabase;
+      const { data, error } = await client.from('novels').insert({ owner_id: viewer.id, slug: work.slug, title: work.title, category: work.category, synopsis: work.synopsis, status: 'draft' }).select('id,slug,title,category,synopsis,status,cover_path,banner_path').single();
       if (error) return { ok: false, reason: error.message };
+      const uploadedPaths: string[] = [];
+      const uploadAsset = async (file: File | null | undefined, kind: 'cover' | 'banner') => {
+        if (!file) return { path: undefined as string | undefined, error: null as { message: string } | null };
+        const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
+        const path = `${viewer.id}/${String(data.id)}/${kind}-${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await client.storage.from(NOVEL_ASSET_BUCKET).upload(path, file, { upsert: false, contentType: file.type, cacheControl: '31536000' });
+        if (uploadError) return { path: undefined, error: uploadError };
+        uploadedPaths.push(path);
+        return { path, error: null };
+      };
+      const coverUpload = await uploadAsset(coverFile, 'cover');
+      const bannerUpload = coverUpload.error ? { path: undefined, error: coverUpload.error } : await uploadAsset(bannerFile, 'banner');
+      if (coverUpload.error || bannerUpload.error) {
+        if (uploadedPaths.length) await client.storage.from(NOVEL_ASSET_BUCKET).remove(uploadedPaths);
+        await client.from('novels').delete().eq('id', data.id).eq('owner_id', viewer.id);
+        console.error('[glyph] novel asset upload failed', coverUpload.error ?? bannerUpload.error);
+        return { ok: false, reason: '작품 이미지를 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+      }
+      const assetUpdate = coverUpload.path || bannerUpload.path
+        ? await client.from('novels').update({ cover_path: coverUpload.path ?? null, banner_path: bannerUpload.path ?? null, updated_at: new Date().toISOString() }).eq('id', data.id).eq('owner_id', viewer.id)
+        : { error: null };
+      if (assetUpdate.error) {
+        if (uploadedPaths.length) await client.storage.from(NOVEL_ASSET_BUCKET).remove(uploadedPaths);
+        await client.from('novels').delete().eq('id', data.id).eq('owner_id', viewer.id);
+        console.error('[glyph] novel asset metadata update failed', assetUpdate.error);
+        return { ok: false, reason: '작품 이미지를 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.' };
+      }
       setCatalogNovelIds((previous) => ({ ...previous, [String(data.slug)]: String(data.id) }));
-      commit((previous) => ({ ...previous, authorWorks: [{ id: String(data.id), slug: String(data.slug), title: String(data.title), category: data.category as Exclude<CategoryId, 'all'>, synopsis: String(data.synopsis ?? ''), status: data.status as AuthorWork['status'] }, ...previous.authorWorks] }));
+      commit((previous) => ({ ...previous, authorWorks: [{ id: String(data.id), slug: String(data.slug), title: String(data.title), category: data.category as Exclude<CategoryId, 'all'>, synopsis: String(data.synopsis ?? ''), status: data.status as AuthorWork['status'], coverUrl: publicNovelAssetUrl(coverUpload.path), bannerUrl: publicNovelAssetUrl(bannerUpload.path) }, ...previous.authorWorks] }));
       return { ok: true };
     },
     saveDraft: async (novelId, title, body, publish, draftId) => {
